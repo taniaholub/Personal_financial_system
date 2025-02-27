@@ -1,8 +1,13 @@
 {
   "dependencies": {
     "@nestjs/common": "^11.0.10",
+    "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^11.0.10",
+    "@nestjs/microservices": "^11.0.10",
     "@nestjs/platform-express": "^11.0.10",
+    "bcrypt": "^5.1.1",
+    "pg": "^8.13.3",
+    "typeorm": "^0.3.20",
     "typescript": "5.2"
   },
   "devDependencies": {
