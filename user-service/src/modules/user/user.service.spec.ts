@@ -1,8 +1,7 @@
 import { userService } from './user.service';
 import { Repository } from 'typeorm';
-import { User } from './user.entity';
-import { Role } from './role.entity';
-import { Mock } from 'jest-mock';
+import { User } from '../../entity/user.entity';
+import { Role } from '../../entity/role.entity';
 
 describe('userService', () => {
   let service: userService;
