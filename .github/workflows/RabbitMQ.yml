@@ -15,11 +15,12 @@ jobs:
     services:
       rabbitmq:
         image: "rabbitmq:management"
-        container_name: rabbitmq
         ports:
           - "5672:5672"
-        networks:
-          - app-network
+          - "15672:15672"
+        options: >-
+          --env RABBITMQ_DEFAULT_USER=guest
+          --env RABBITMQ_DEFAULT_PASS=guest
 
     steps:
       - name: Checkout code
@@ -52,12 +53,6 @@ jobs:
       - name: Test RabbitMQ management API connection
         run: |
           echo "Testing RabbitMQ management API connection..."
-          # Оскільки контейнер слухає на порті 15672, але він не публікований на хості,
-          # з сервісу можна звернутися до нього за внутрішнім портом.
           curl -s --fail http://rabbitmq:15672/api/overview --user guest:guest
           echo "RabbitMQ management API connection successful!"
-
-    networks:
-      app-network:
-        driver: bridge
 
