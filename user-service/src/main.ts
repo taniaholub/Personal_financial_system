@@ -15,4 +15,5 @@ async function bootstrap() {
   await app.listen();
   console.log('User Service is running and connected to RabbitMQ');
 }
+
 bootstrap();

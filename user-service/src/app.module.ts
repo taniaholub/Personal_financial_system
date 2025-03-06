@@ -3,7 +3,8 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ModulesModule } from './modules/modules.module'
+import { ModulesModule } from './modules/modules.module';
+import { DatabaseService } from './database/database.service'; // Імпортуємо DatabaseService
 
 @Module({
   imports: [
@@ -20,10 +21,12 @@ import { ModulesModule } from './modules/modules.module'
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
       entities: [__dirname + '/**/*.entity.{js,ts}'],
-      synchronize: true,
+      synchronize: false,
     }),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, DatabaseService], // Додаємо DatabaseService до провайдерів
+  exports: [DatabaseService], // Експортуємо DatabaseService, щоб інші модулі могли його використовувати
 })
 export class AppModule {}
+
