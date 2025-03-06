@@ -1,3 +1,3 @@
-import { configService } from './config.service';
+import { ConfigService } from './config.service';
 
-export { configService };
+export { ConfigService };
