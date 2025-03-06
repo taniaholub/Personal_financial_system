@@ -14,13 +14,13 @@ jobs:
 
     services:
       postgres:
-        image: "postgres:latest"
+        image: "personal_financial_system:latest"
         ports:
           - "5432:5432"
-        environment:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: 1234
-          POSTGRES_DB: personal_financial_system
+        options: >-
+          --env POSTGRES_USER=postgres
+          --env POSTGRES_PASSWORD=1234
+          --env POSTGRES_DB=personal_financial_system
           
     steps:
       - name: Checkout code
