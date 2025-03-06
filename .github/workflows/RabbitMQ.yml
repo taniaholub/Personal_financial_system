@@ -15,9 +15,11 @@ jobs:
     services:
       rabbitmq:
         image: "rabbitmq:management"
+        container_name: rabbitmq
         ports:
           - "5672:5672"
-          - "15672:15672"
+        networks:
+          - app-network
 
     steps:
       - name: Checkout code
@@ -38,17 +40,24 @@ jobs:
         run: |
           docker compose -f docker-compose.yml up -d
 
-      - name: Wait for RabbitMQ to be ready
+      - name: Wait for RabbitMQ AMQP port to be available
         run: |
           echo "Waiting for RabbitMQ AMQP port to be available..."
           until nc -z -v -w30 rabbitmq 5672; do
             echo "Waiting for RabbitMQ..."
             sleep 5
           done
-          echo "RabbitMQ is ready!"
+          echo "RabbitMQ AMQP port is accessible!"
 
-      - name: Test RabbitMQ connection via management API
+      - name: Test RabbitMQ management API connection
         run: |
           echo "Testing RabbitMQ management API connection..."
+          # Оскільки контейнер слухає на порті 15672, але він не публікований на хості,
+          # з сервісу можна звернутися до нього за внутрішнім портом.
           curl -s --fail http://rabbitmq:15672/api/overview --user guest:guest
           echo "RabbitMQ management API connection successful!"
+
+    networks:
+      app-network:
+        driver: bridge
+
