@@ -36,4 +36,19 @@ jobs:
 
       - name: Build and start Docker containers with Docker Compose
         run: |
-          docker-compose -f docker-compose.yml up -d
+          docker compose -f docker-compose.yml up -d
+
+      - name: Wait for RabbitMQ to be ready
+        run: |
+          echo "Waiting for RabbitMQ AMQP port to be available..."
+          until nc -z -v -w30 rabbitmq 5672; do
+            echo "Waiting for RabbitMQ..."
+            sleep 5
+          done
+          echo "RabbitMQ is ready!"
+
+      - name: Test RabbitMQ connection via management API
+        run: |
+          echo "Testing RabbitMQ management API connection..."
+          curl -s --fail http://rabbitmq:15672/api/overview --user guest:guest
+          echo "RabbitMQ management API connection successful!"
