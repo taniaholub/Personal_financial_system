@@ -12,16 +12,6 @@ jobs:
   check-rabbitmq:
     runs-on: ubuntu-latest
 
-    services:
-      rabbitmq:
-        image: "rabbitmq:management"
-        ports:
-          - "5672:5672"
-          - "15672:15672"
-        options: >-
-          --env RABBITMQ_DEFAULT_USER=guest
-          --env RABBITMQ_DEFAULT_PASS=guest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
