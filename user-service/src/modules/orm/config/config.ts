@@ -1,14 +1,14 @@
 import { DataSource } from 'typeorm';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 
-const dbName = process.env.DB_NAME || 'users';
+const dbName = process.env.DB_NAME || 'personal_financial_system';
 
 export const typeOrmModuleOptions: PostgresConnectionOptions = {
   type: 'postgres',
-  host: process.env.DB_HOST || '127.0.0.1',
+  host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '5432', 10),
   username: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'postgres',
+  password: process.env.DB_PASSWORD || '1234',
   cache: false,
   database: dbName,
   logging: ['warn', 'error'],

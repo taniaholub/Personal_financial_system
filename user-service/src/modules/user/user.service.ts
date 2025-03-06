@@ -1,12 +1,12 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { RpcException } from '@nestjs/microservices';
+import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 
-import { userDTO } from './dto';
-import { User } from '../../entity/user.entity';
+import { userDTO } from '../user/dto';
 import { Role } from '../../entity/role.entity';
+import { User } from '../../entity/user.entity';
 
 @Injectable()
 export class userService {

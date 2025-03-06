@@ -4,7 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ModulesModule } from './modules/modules.module';
-import { DatabaseService } from './database/database.service'; // Імпортуємо DatabaseService
+import { DatabaseService } from './database/database.service';
 
 @Module({
   imports: [
@@ -25,8 +25,8 @@ import { DatabaseService } from './database/database.service'; // Імпорту
     }),
   ],
   controllers: [AppController],
-  providers: [AppService, DatabaseService], // Додаємо DatabaseService до провайдерів
-  exports: [DatabaseService], // Експортуємо DatabaseService, щоб інші модулі могли його використовувати
+  providers: [AppService, DatabaseService],
+  exports: [DatabaseService],
 })
 export class AppModule {}
 

@@ -27,12 +27,6 @@
     "noUnusedParameters": true,
     "strictFunctionTypes": true
   },
-  "include": [
-    "src/**/*",
-    ".eslintrc.js"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "include": ["src/**/*", ".eslintrc.js", "../../dto"],
+  "exclude": ["node_modules", "dist"]
 }
