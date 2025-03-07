@@ -27,6 +27,6 @@
     "noUnusedParameters": true,
     "strictFunctionTypes": true
   },
-  "include": ["src/**/*", ".eslintrc.js", "../../dto"],
+  "include": ["src/**/*", ".eslintrc.js", "../../dto", "../api-gateway/src/modules/user/server.ts"],
   "exclude": ["node_modules", "dist"]
 }
