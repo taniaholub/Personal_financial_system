@@ -28,21 +28,20 @@ jobs:
             ${{ runner.os }}-buildx-
 
       - name: Build and start Docker containers with Docker Compose
-        run: |
-          docker compose -f docker-compose.yml up -d
+        run: docker compose -f docker-compose.yml up -d
 
-      - name: Wait for RabbitMQ AMQP port to be available
+      - name: Wait for RabbitMQ to be healthy
         run: |
-          echo "Waiting for RabbitMQ AMQP port to be available..."
-          until nc -z -v -w30 rabbitmq 5672; do
+          echo "Waiting for RabbitMQ to be healthy..."
+          until [ "$(docker inspect -f '{{.State.Health.Status}}' rabbitmq)" == "healthy" ]; do
             echo "Waiting for RabbitMQ..."
             sleep 5
           done
-          echo "RabbitMQ AMQP port is accessible!"
+          echo "RabbitMQ is healthy!"
 
       - name: Test RabbitMQ management API connection
         run: |
           echo "Testing RabbitMQ management API connection..."
-          curl -s --fail http://rabbitmq:15672/api/overview --user guest:guest
+          curl -s --fail http://localhost:15672/api/overview --user guest:guest
           echo "RabbitMQ management API connection successful!"
 
