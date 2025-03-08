@@ -3,10 +3,10 @@ name: Check Database Connection
 on:
   push:
     branches:
-      - lab1
+      - lab1test
   pull_request:
     branches:
-      - lab1
+      - lab1test
 
 jobs:
   check-db-connection:
@@ -19,7 +19,7 @@ jobs:
           - "5432:5432"
         options: >-
           --env POSTGRES_USER=postgres
-          --env POSTGRES_PASSWORD=1234
+          --env POSTGRES_PASSWORD=110705
           --env POSTGRES_DB=personal_financial_system
           
     steps:

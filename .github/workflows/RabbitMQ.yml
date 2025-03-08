@@ -3,10 +3,10 @@ name: Docker Compose CI
 on:
   push:
     branches:
-      - lab1
+      - lab1test
   pull_request:
     branches:
-      - lab1
+      - lab1test
 
 jobs:
   check-rabbitmq:
