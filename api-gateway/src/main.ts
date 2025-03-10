@@ -9,7 +9,7 @@ async function bootstrap() {
     transport: Transport.RMQ,
     options: {
       urls: ['amqp://guest:guest@127.0.0.1:5672'],
-      queue: 'api_gateway_queue',
+      queue: 'user_queue', // використовуємо ту ж назву, що й у клієнтському проксі
       queueOptions: { durable: false },
     },
   });
