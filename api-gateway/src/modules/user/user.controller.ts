@@ -1,20 +1,36 @@
-import { Controller, Post, Body, Inject } from '@nestjs/common';
+import { Controller, Post, Body, Inject, Req, Logger, BadRequestException, UseGuards } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
+import { AuthGuard } from '../../../guards/auth.guard';
 
+@UseGuards(AuthGuard)
 @Controller('users')
 export class UserController {
+  private readonly logger = new Logger(UserController.name);
   constructor(@Inject('USER_SERVICE') private readonly userService: ClientProxy) {}
 
   @Post('login')
-  async loginUser(@Body() data: { username: string; password: string }) {
-    console.log('Login request received:', data);
-    return firstValueFrom(this.userService.send({ cmd: 'login_user' }, data));
+  async loginUser(@Req() req, @Body() body: { username: string; password: string }) {
+    this.logger.log("Login new user");
+
+    if (!req.user?.memberId) {
+      throw new BadRequestException('User memberId is missing.');
+    }
+
+    return await firstValueFrom(
+      this.userService.send('loginUser', { sender_member_id: req.user.memberId, ...body })
+    );
   }
 
   @Post('register')
-  async registerUser(@Body() data: { username: string; password: string; role: string }) {
-    console.log('Register request received:', data);
-    return firstValueFrom(this.userService.send({ cmd: 'create_user' }, data));
+  async registerUser(@Req() req, @Body() body: { username: string; password: string; role: string }) {
+    this.logger.log("Register new user");
+
+    if (!req.user?.memberId) {
+      throw new BadRequestException('User memberId is missing.');
+    }
+    return await firstValueFrom(
+      this.userService.send('registerUser', { sender_member_id: req.user.memberId, ...body })
+    );
   }
 }
