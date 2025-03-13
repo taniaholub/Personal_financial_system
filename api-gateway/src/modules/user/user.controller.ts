@@ -10,7 +10,7 @@ export class UserController {
   constructor(@Inject('USER_SERVICE') private readonly userService: ClientProxy) {}
 
 
- /* @Get('login')
+  /*@Get('login')
   getlogin(): string {
     return 'Login endpoint is working!';
   }*/

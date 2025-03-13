@@ -30,7 +30,7 @@ export class AuthService {
         };
     }
 
-    async verifyAccessToken(token: string): Promise<TokenPayload> {
+    async verifyAccessToken({token}): Promise<TokenPayload> {
         try {
             return this.jwtService.verify(token, {
                 secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
