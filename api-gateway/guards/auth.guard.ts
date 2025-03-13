@@ -17,8 +17,9 @@ import {
     async canActivate(context: ExecutionContext): Promise<boolean> {
       const request = context.switchToHttp().getRequest();
       const token = request.headers.authorization?.split(' ')[1]; // Виділяємо токен
-  
+      this.logger.log(`Отриманий токен: ${token}`);
       if (!token) {
+        this.logger.warn('Токен відсутній у запиті');
         return false;
       }
   
@@ -27,12 +28,13 @@ import {
         const user = await firstValueFrom(
           this.userClient.send({ cmd: 'auth.verify' }, { token }),
         );
-  
+        this.logger.log(`Верифікований користувач: ${JSON.stringify(user)}`);
         // Додаємо користувача в request для використання в контролерах
         request.user = user;
         return true;
       } catch (err) {
         this.logger.error(err);
+        this.logger.error(`Помилка верифікації токена: ${err.message}`);
         return false;
       }
     }

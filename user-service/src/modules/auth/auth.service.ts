@@ -60,7 +60,7 @@ export class AuthService {
     async refreshTokens(refreshToken: string): Promise<Tokens> {
         const decoded = await this.verifyRefreshToken(refreshToken);
         const tokens = await this.generateTokens({
-            member_id: decoded.member_id,
+            memberId: decoded.memberId,
             role_id: decoded.role_id,
         });
 

@@ -4,6 +4,6 @@ export interface Tokens {
   }
   
   export interface TokenPayload {
-    member_id: string;
+    memberId: string;
     role_id: string;
   }

@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Inject, Req, Logger, BadRequestException, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Inject, Req, Logger, BadRequestException, UseGuards, Get } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import { AuthGuard } from '../../../guards/auth.guard';
@@ -8,6 +8,13 @@ import { AuthGuard } from '../../../guards/auth.guard';
 export class UserController {
   private readonly logger = new Logger(UserController.name);
   constructor(@Inject('USER_SERVICE') private readonly userService: ClientProxy) {}
+
+
+ /* @Get('login')
+  getlogin(): string {
+    return 'Login endpoint is working!';
+  }*/
+  
 
   @Post('login')
   async loginUser(@Req() req, @Body() body: { username: string; password: string }) {
