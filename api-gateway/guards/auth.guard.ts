@@ -11,7 +11,7 @@ import {
   @Injectable()
   export class AuthGuard implements CanActivate {
     private readonly logger = new Logger(AuthGuard.name);
-  
+
     constructor(@Inject('USER_SERVICE') private readonly userClient: ClientProxy) {}
   
     async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -25,12 +25,12 @@ import {
   
       try {
         // Відправляємо запит до user-service для верифікації токена
-        const user = await firstValueFrom(
+        const $user = await firstValueFrom(
           this.userClient.send({ cmd: 'auth.verify' }, { token }),
         );
-        this.logger.log(`Верифікований користувач: ${JSON.stringify(user)}`);
+        this.logger.log(`Верифікований користувач: ${JSON.stringify($user)}`);
         // Додаємо користувача в request для використання в контролерах
-        request.user = user;
+        request.user = $user;
         return true;
       } catch (err) {
         this.logger.error(err);

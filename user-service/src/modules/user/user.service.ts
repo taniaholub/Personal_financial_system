@@ -51,6 +51,21 @@ export class userService {
     });
   }
 
+  async loginUser(dto: { email: string; password: string }) {
+    const user = await this.userRepository.find({
+      where: { email: dto.email },
+    });
+
+    if (dto.password !== user[0].password) {
+      throw new RpcException('Incorrect password');
+    }
+
+    return this.authService.generateTokens({
+      memberId: user[0].id,
+      role_id: user[0].role_id,
+    });
+  }
+
   async findUserById(id: string) {
     return this.userRepository.findOne({ where: { id } });
   }

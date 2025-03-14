@@ -15,6 +15,12 @@ export class userController {
     return this.userService.createUser(data);
   }
 
+  @MessagePattern({ cmd: 'login' })
+  async loginMember(data: userDTO){
+    this.logger.log('Login user');
+    return this.userService.loginUser(data);
+  }
+
   @MessagePattern({ cmd: 'find_user_by_id' })
   async findUserById(id: string) {
     return this.userService.findUserById(id);

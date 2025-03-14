@@ -9,17 +9,21 @@ export class UserController {
 
   constructor(private readonly userService: UserService) {}
 
-  @UseGuards(AuthGuard)
   @Post('registration')
   async registrationUser(@Body() user: User) {
     this.logger.log('Registration user');
     return this.userService.registrationUser(user);
   }
 
-  @UseGuards(AuthGuard)
   @Post('login')
   async loginUser(@Body() user: User) {
     this.logger.log('Login user');
     return this.userService.loginUser(user);
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('')
+  async getMemberData(@Req() req: Request){
+    return this.userService.getMember({memberId: req.user.memberId});
   }
 }

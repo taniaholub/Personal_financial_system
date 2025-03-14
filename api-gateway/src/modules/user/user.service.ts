@@ -31,5 +31,9 @@ export class UserService {
   async loginUser(dto: { email: string; password: string }) {
     this.logger.log(`Logging in user with email: ${dto.email}`);
     return this.send(patterns.USER.LOGIN, dto);
-  } 
+  }
+
+  async getMember(dto: {memberId: string}){
+    return this.send(patterns.USER.FIND_BY_ID, dto);
+  }
 }
