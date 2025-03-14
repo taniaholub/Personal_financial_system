@@ -1,14 +1,35 @@
-import { Injectable } from '@nestjs/common';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { ClientProxy, MessagePattern, Payload } from '@nestjs/microservices';
+import { catchError, firstValueFrom, throwError, timeout } from 'rxjs';
+import { patterns } from '../patterns';
+import { User } from './dto/user.dto';
 
 @Injectable()
 export class UserService {
-  async createUser(@Payload() data: { username: string; password: string; role: string }) {
-    console.log('User registered:', data);
-    return { message: `User ${data.username} registered successfully!` };
+  private readonly logger = new Logger(UserService.name);
+
+  constructor(
+    @Inject('USER_SERVICE') private readonly userClient: ClientProxy,
+  ) {}
+
+  private send(pattern: any, data: any): Promise<unknown> {
+    const res$ = this.userClient.send(pattern, data).pipe(
+      timeout(30000),
+      catchError((e: Error) => {
+        this.logger.error(e);
+        return throwError(() => e);
+      }),
+    );
+    return firstValueFrom(res$);
   }
-  async loginUser(@Payload() data: { username: string; password: string }) {
-    console.log('User login attempt:', data);
-    return { message: `User ${data.username} logged in successfully!` };
+
+  async registrationUser(dto: User) {
+    this.logger.log('Registration user');
+    return this.send(patterns.USER.CREATE, dto);
   }
+
+  async loginUser(dto: { email: string; password: string }) {
+    this.logger.log(`Logging in user with email: ${dto.email}`);
+    return this.send(patterns.USER.LOGIN, dto);
+  } 
 }

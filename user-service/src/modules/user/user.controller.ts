@@ -1,14 +1,17 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Logger } from '@nestjs/common';
 import { MessagePattern } from '@nestjs/microservices';
 import { userDTO } from '../user/dto/user.dto';
 import { userService } from './user.service';
 
 @Controller()
 export class userController {
+  private readonly logger = new Logger(userController.name);
   constructor(private readonly userService: userService) {}
 
   @MessagePattern({ cmd: 'create_user' })
-  async createUser(data: { username: string; password: string; role: string }) {
+  async createUser(data: userDTO) {
+    console.log(data);
+    this.logger.log('Creating user');
     return this.userService.createUser(data);
   }
 

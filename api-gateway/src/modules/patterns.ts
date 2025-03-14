@@ -7,5 +7,6 @@ export const patterns = {
       DELETE: { cmd: 'delete_user' },
       FIND_BY_EMAIL: { cmd: 'find_user_by_email' },
       RESET_PASSWORD: { cmd: 'reset_password' },
+      LOGIN: { cmd: 'login' },
     },
   };

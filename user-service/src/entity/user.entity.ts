@@ -15,7 +15,7 @@ import {
     @Column({ unique: true })
     email: string;
   
-    @Column()
+    @Column({ unique: true })
     password: string;
   
     @Column({ unique: true })
