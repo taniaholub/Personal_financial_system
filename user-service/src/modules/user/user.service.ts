@@ -4,6 +4,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 
+import { AuthService } from '../auth/auth.service';
+
 import { userDTO } from '../user/dto';
 import { Role } from '../../entity/role.entity';
 import { User } from '../../entity/user.entity';
@@ -13,6 +15,7 @@ export class userService {
   private readonly logger = new Logger(userService.name);
 
   constructor(
+    private readonly authService: AuthService,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     @InjectRepository(Role)
@@ -34,12 +37,18 @@ export class userService {
 
     const userData = { email, username, password: userPassword };
 
-    const user = this.userRepository.create({
+    const $user = this.userRepository.create({
       ...userData,
       role_id: roleEntity.id,
     });
 
-    return this.userRepository.save(user);
+   
+    const user = await this.userRepository.save($user);
+  
+    return this.authService.generateTokens({
+      memberId: user.id,
+      role_id: user.role_id,
+    });
   }
 
   async findUserById(id: string) {

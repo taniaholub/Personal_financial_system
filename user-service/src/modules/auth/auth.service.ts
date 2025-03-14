@@ -12,16 +12,16 @@ export class AuthService {
 
     async generateTokens(payload: TokenPayload): Promise<Tokens> {
         const [accessToken, refreshToken] = await Promise.all([
-            this.jwtService.sign(payload, {
-                secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
-                expiresIn:
-                    this.configService.get<string>('JWT_ACCESS_EXPIRATION') || '15m',
-            }),
-            this.jwtService.sign(payload, {
-                secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-                expiresIn:
-                    this.configService.get<string>('JWT_REFRESH_EXPIRATION') || '7d',
-            }),
+          this.jwtService.sign(payload, {
+            secret: this.configService.get<string>('JWT_SECRET') || 'very%s1Cr3t',
+            expiresIn:
+              this.configService.get<string>('JWT_ACCESS_EXPIRATION') || '1d',
+          }),
+          this.jwtService.sign(payload, {
+            secret: this.configService.get<string>('JWT_SECRET') || 'very%s1Cr3t',
+            expiresIn:
+              this.configService.get<string>('JWT_REFRESH_EXPIRATION') || '7d',
+          }),
         ]);
 
         return {
@@ -33,7 +33,7 @@ export class AuthService {
     async verifyAccessToken({token}): Promise<TokenPayload> {
         try {
             return this.jwtService.verify(token, {
-                secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
+              secret: this.configService.get<string>('JWT_SECRET') || 'very%s1Cr3t',
             });
         } catch (error: unknown) {  // додаємо тип для 'error'
             if (error instanceof Error) {
@@ -46,7 +46,7 @@ export class AuthService {
     async verifyRefreshToken(token: string): Promise<TokenPayload> {
         try {
             return this.jwtService.verify(token, {
-                secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+              secret: this.configService.get<string>('JWT_SECRET') || 'very%s1Cr3t',
             });
         } catch (error: unknown) {  // додаємо тип для 'error'
             if (error instanceof Error) {

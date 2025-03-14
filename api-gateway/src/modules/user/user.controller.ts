@@ -1,10 +1,11 @@
-import { Controller, Post, Body, Inject, Req, Logger, BadRequestException, UseGuards, Get } from '@nestjs/common';
+import { Controller, Post, Body, Request, Inject, Req, Logger, BadRequestException, UseGuards, Get } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import { AuthGuard } from '../../../guards/auth.guard';
 
-@UseGuards(AuthGuard)
+
 @Controller('users')
+//@UseGuards(AuthGuard)
 export class UserController {
   private readonly logger = new Logger(UserController.name);
   constructor(@Inject('USER_SERVICE') private readonly userService: ClientProxy) {}
