@@ -32,11 +32,11 @@ export class userService {
 
     const roleEntity = await this.roleRepository.findOneBy({ name: role });
     if (!roleEntity) {
-      throw new NotFoundException(`Role ${role} not found`);
+      throw new RpcException(`Role ${role} not found`);
     }
 
     const userData = { email, username, password: userPassword };
-
+    
     const $user = this.userRepository.create({
       ...userData,
       role_id: roleEntity.id,
@@ -66,8 +66,8 @@ export class userService {
     });
   }
 
-  async findUserById(id: string) {
-    return this.userRepository.findOne({ where: { id } });
+  async findUserById(data: {id: string}) {
+    return this.userRepository.findOne({where: { id: data.id }});
   }
 
   async findUserByEmail(email: string) {
@@ -75,7 +75,7 @@ export class userService {
   }
 
   async deleteUser(id: string) {
-    const user = await this.findUserById(id);
+    const user = await this.findUserById({ id });
     if (!user) {
       throw new RpcException('User not found');
     }
@@ -83,7 +83,7 @@ export class userService {
   }
 
   async updateUser(id: string, dto: userDTO) {
-    const user = await this.findUserById(id);
+    const user = await this.findUserById({ id });
     if (!user) {
       throw new RpcException('User not found');
     }

@@ -13,6 +13,8 @@ export class UserService {
   ) {}
 
   private send(pattern: any, data: any): Promise<unknown> {
+    console.log(pattern, data);
+    
     const res$ = this.userClient.send(pattern, data).pipe(
       timeout(30000),
       catchError((e: Error) => {
@@ -35,5 +37,10 @@ export class UserService {
 
   async getMember(dto: {memberId: string}){
     return this.send(patterns.USER.FIND_BY_ID, dto);
+  }
+
+  async findAllUsers() {
+    this.logger.log('Finding all users');
+    return this.send(patterns.USER.FIND_ALL, {});
   }
 }

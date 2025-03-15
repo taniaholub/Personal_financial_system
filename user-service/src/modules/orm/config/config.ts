@@ -1,4 +1,3 @@
-import { DataSource } from 'typeorm';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 
 const dbName = process.env.DB_NAME || 'personal_financial_system';
@@ -13,18 +12,5 @@ export const typeOrmModuleOptions: PostgresConnectionOptions = {
   database: dbName,
   logging: ['warn', 'error'],
   ssl: process.env.SSL_MODE === 'true' ? { rejectUnauthorized: false } : false,
-  synchronize: false,
+  synchronize: true,
 };
-
-const appDataSource = new DataSource({
-  ...typeOrmModuleOptions,
-  migrationsTableName: 'migrations',
-  migrations: [__dirname + '/../../../migrations/*.{js,ts}'],
-  entities: [__dirname + '/../../../entities/*.entity.{js,ts}'],
-  migrationsRun: true,
-});
-
-(async () => {
-  await appDataSource.initialize();
-})();
-export default appDataSource;

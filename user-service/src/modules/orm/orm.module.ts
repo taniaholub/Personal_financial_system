@@ -6,8 +6,8 @@ import { typeOrmModuleOptions } from './config/config';
   imports: [
     TypeOrmModule.forRoot({
       ...typeOrmModuleOptions,
-      migrations: [__dirname + '/../migrations/*.{js,ts}'],
-      entities: [__dirname + '/../entities/*.entity.{js,ts}'],
+      migrations: [__dirname + '/../../migrations/*.{js,ts}'],
+      entities: [__dirname + '/../../entity/*.entity.{js,ts}'],
     }),
   ],
 })

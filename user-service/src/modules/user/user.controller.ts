@@ -2,15 +2,15 @@ import { Controller, Logger } from '@nestjs/common';
 import { MessagePattern } from '@nestjs/microservices';
 import { userDTO } from '../user/dto/user.dto';
 import { userService } from './user.service';
+import { patterns } from '../patterns';
 
 @Controller()
 export class userController {
   private readonly logger = new Logger(userController.name);
   constructor(private readonly userService: userService) {}
 
-  @MessagePattern({ cmd: 'create_user' })
+  @MessagePattern(patterns.USER.CREATE)
   async createUser(data: userDTO) {
-    console.log(data);
     this.logger.log('Creating user');
     return this.userService.createUser(data);
   }
@@ -22,8 +22,8 @@ export class userController {
   }
 
   @MessagePattern({ cmd: 'find_user_by_id' })
-  async findUserById(id: string) {
-    return this.userService.findUserById(id);
+  async findUserById(dto) {
+    return this.userService.findUserById(dto);
   }
 
   @MessagePattern({ cmd: 'find_user_by_email' })
@@ -46,7 +46,7 @@ export class userController {
     return this.userService.resetPassword(email);
   }
 
-  @MessagePattern({ cmd: 'list_users' })
+  @MessagePattern({ cmd: 'find_all_users' })
   async listUsers() {
     return this.userService.listUsers();
   }

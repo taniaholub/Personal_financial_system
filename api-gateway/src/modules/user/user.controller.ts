@@ -23,7 +23,12 @@ export class UserController {
 
   @UseGuards(AuthGuard)
   @Get('')
-  async getMemberData(@Req() req: Request){
-    return this.userService.getMember({memberId: req.user.memberId});
+  async getMemberData(@Req() req){
+    return this.userService.getMember({ memberId: req.user.memberId });
+  }
+
+  @Get('list')
+  async getMembers() {
+    return this.userService.findAllUsers()
   }
 }

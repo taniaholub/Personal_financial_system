@@ -11,7 +11,7 @@ import { UserService } from './user.service';
         transport: Transport.RMQ,
         options: {
           urls: ['amqp://guest:guest@127.0.0.1:5672'],
-          queue: 'user_queue',
+          queue: 'user-service',
           queueOptions: { durable: false },
         },
       },
