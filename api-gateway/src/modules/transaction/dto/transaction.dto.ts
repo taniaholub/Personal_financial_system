@@ -1,32 +1,34 @@
-// transaction.dto.ts
-import { IsString, IsUUID, IsNumber, IsEnum, IsOptional, IsDate } from 'class-validator';
+import { IsString, IsNotEmpty, IsEnum, IsNumber, IsOptional } from 'class-validator';
 
-export class TransactionDto {
-  @IsUUID()
-  @IsOptional()
-  id?: string;
-
-  @IsUUID()
+export class CreateTransactionDto {
+  @IsNotEmpty()
+  @IsString()
   user_id: string;
 
+  @IsNotEmpty()
   @IsNumber()
   amount: number;
 
+  @IsNotEmpty()
   @IsEnum(['income', 'expense'])
   type: 'income' | 'expense';
 
+  @IsOptional()
   @IsString()
-  category: string;
+  category?: string;
 
   @IsOptional()
   @IsString()
   description?: string;
 
-  @IsDate()
-  @IsOptional()
-  transaction_date?: Date;
+  @IsNotEmpty()
+  transaction_date: string;
 
-  @IsDate()
-  @IsOptional()
-  created_at?: Date;
+  @IsNotEmpty()
+  created_at: string;
+}
+
+export class TransactionSummaryDto {
+  income: number;
+  expense: number;
 }

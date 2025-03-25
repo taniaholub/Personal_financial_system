@@ -1,5 +1,6 @@
 import { Controller, Post, Get, Param, Body, Inject, Logger } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
+import { CreateTransactionDto } from './dto/transaction.dto';
 
 @Controller('transactions')
 export class TransactionController {
@@ -8,7 +9,7 @@ export class TransactionController {
   constructor(@Inject('TRANSACTION_SERVICE') private readonly transactionClient: ClientProxy) {}
 
   @Post()
-  async createTransaction(@Body() transactionData) {
+  async createTransaction(@Body() transactionData: CreateTransactionDto) {
     this.logger.log('Creating transaction');
     return this.transactionClient.send('create_transaction', transactionData);
   }
