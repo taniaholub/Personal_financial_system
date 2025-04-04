@@ -15,20 +15,22 @@ export class TransactionsService {
   }
 
   findAll(
-    user_id: string, 
-    type?: string, 
-    category?: string, 
+    user_id: string,
+    type?: string,
+    category?: string,
     sortBy?: string, // Параметр для сортування
     sortOrder?: 'ASC' | 'DESC', // Параметр для порядку сортування
   ) {
-    const query = this.transactionRepository.createQueryBuilder('transaction')
+    const query = this.transactionRepository
+      .createQueryBuilder('transaction')
       .where('transaction.user_id = :user_id', { user_id });
 
     // Фільтрація за типом
     if (type) query.andWhere('transaction.type = :type', { type });
 
     // Фільтрація за категорією
-    if (category) query.andWhere('transaction.category = :category', { category });
+    if (category)
+      query.andWhere('transaction.category = :category', { category });
 
     // Сортування
     if (sortBy) {
@@ -42,8 +44,10 @@ export class TransactionsService {
     return this.transactionRepository.delete(id);
   }
   async getTransactionSummary(userId: string) {
-    const transactions = await this.transactionRepository.find({ where: { user_id: userId } });
-  
+    const transactions = await this.transactionRepository.find({
+      where: { user_id: userId },
+    });
+
     const summary = transactions.reduce(
       (acc, transaction) => {
         if (transaction.type === 'income') {
@@ -55,8 +59,7 @@ export class TransactionsService {
       },
       { income: 0, expense: 0 },
     );
-  
+
     return summary;
   }
-  
 }
