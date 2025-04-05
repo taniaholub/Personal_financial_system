@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectConnection, InjectRepository } from '@nestjs/typeorm';
-import { Connection, Repository } from 'typeorm';
+import {Repository } from 'typeorm';
 import { Goal } from '../../entity/goal.entity';
 import { Transaction } from '../transactions/entity/transaction.entity';
-
+import { Connection } from 'typeorm';
 import { LessThanOrEqual } from 'typeorm';
 
 @Injectable()
@@ -17,9 +17,20 @@ export class GoalsService {
   ) {}
 
   // Створення фінансової цілі
-  create(goalData: Partial<Goal>) {
-    return this.goalRepository.save(goalData);
+  async create(goalData: Partial<Goal>) {
+    try {
+      return this.goalRepository.save(goalData);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error('Error saving goal:', error.message); // Лог помилки
+      } else {
+        console.error('Unknown error while saving goal:', error); // Лог невідомої помилки
+      }
+      throw error; // Перекидаємо помилку далі, якщо необхідно
+    }
   }
+  
+  
 
   // Отримання списку фінансових цілей користувача
   findAll(userId: string) {

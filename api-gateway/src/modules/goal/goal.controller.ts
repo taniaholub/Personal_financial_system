@@ -11,9 +11,17 @@ export class GoalController {
 
   @Post()
   async createGoal(@Body() goalData: CreateGoalDto) {
-    this.logger.log('Creating goal');
-    return this.goalClient.send(patterns.GOAL.CREATE, goalData);
+    this.logger.log('Creating goal'); // Лог на початок
+    try {
+      const result = this.goalClient.send(patterns.GOAL.CREATE, goalData);
+      this.logger.log('Goal created successfully');
+      return result;
+    } catch (error) {
+      this.logger.error('Error creating goal', error.stack); // Лог помилки
+      throw error;
+    }
   }
+  
 
   @Get(':userId')
   async getUserGoals(@Param('userId') userId: string) {

@@ -10,10 +10,26 @@ export class GoalsController {
   constructor(private readonly goalsService: GoalsService) {}
 
   // Обробка повідомлень для створення нової цілі
-  @MessagePattern(patterns.GOAL.CREATE)
-  async createGoal(goalData) {
-    return this.goalsService.create(goalData);
+// GoalsController (в мікросервісі)
+@MessagePattern(patterns.GOAL.CREATE)  // Це має бути точне співпадіння з патерном у patterns.ts
+async createGoal(goalData) {
+  console.log('Received goal data:', goalData);  // Перевірка, чи приходять дані
+  try {
+    return this.goalsService.create(goalData);  // Викликаємо сервіс для створення цілі
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error('Error in createGoal service:', error.message);  // Лог помилки
+    } else {
+      console.error('Unknown error in createGoal service:', error);  // Лог для невідомої помилки
+    }
+    throw error;  // Перекидаємо помилку далі
   }
+}
+
+
+
+  
+
 
   // Обробка повідомлень для отримання цілей користувача
   @MessagePattern(patterns.GOAL.GET)
