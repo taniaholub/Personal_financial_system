@@ -35,9 +35,4 @@ export class GoalController {
     return this.goalClient.send(patterns.GOAL.UPDATE, { id, goalData });
   }
 
-  @Get(':userId/summary')
-  async getGoalSummary(@Param('userId') userId: string) {
-    this.logger.log(`Fetching goal summary for user ${userId}`);
-    return this.goalClient.send(patterns.GOAL.GET_SUMMARY, { userId });
-  }
 }
