@@ -2,7 +2,6 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { v4 as uuidv4 } from 'uuid';
 
 import { AuthService } from '../auth/auth.service';
 
@@ -20,12 +19,11 @@ export class userService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
-  ) {}
+  ) { }
 
   async createUser(dto: { username: string; password: string; role: string }) {
     this.logger.log(`Creating user: ${JSON.stringify(dto)}`);
     const { username, role } = dto;
-    const userPassword = uuidv4().slice(0, 8);
 
     // Generationon email on the basis username
     const email = `${username}@gmail.com`;
@@ -35,16 +33,17 @@ export class userService {
       throw new RpcException(`Role ${role} not found`);
     }
 
-    const userData = { email, username, password: userPassword };
-    
+    const userData = { email, username, password: dto.password };
+
+
     const $user = this.userRepository.create({
       ...userData,
       role_id: roleEntity.id,
     });
 
-   
+
     const user = await this.userRepository.save($user);
-  
+
     return this.authService.generateTokens({
       memberId: user.id,
       role_id: user.role_id,
@@ -66,8 +65,8 @@ export class userService {
     });
   }
 
-  async findUserById(data: {id: string}) {
-    return this.userRepository.findOne({where: { id: data.id }});
+  async findUserById(data: { id: string }) {
+    return this.userRepository.findOne({ where: { id: data.id } });
   }
 
   async findUserByEmail(email: string) {
