@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { setTokens } from "../api";
+import '.././index.css';
 
 export default function LoginPage({ navigate }) {
   const [email, setEmail] = useState("");
@@ -39,7 +40,7 @@ export default function LoginPage({ navigate }) {
       };
 
       setTokens(tokens);
-      navigate("/profile");
+      navigate();
     } catch (err) {
       console.error("Login error:", err);
       setError("Failed to connect to the server. Please try again later.");

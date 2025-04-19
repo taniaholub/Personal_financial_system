@@ -21,4 +21,10 @@ export class TransactionsController {
   async getTransactionSummary({ userId }) {
     return this.transactionsService.getTransactionSummary(userId);
   }
+
+  @MessagePattern(patterns.TRANSACTION.GET_MONTHLY_STATS)
+async getMonthlyStats({ userId }) {
+  return this.transactionsService.getMonthlyStats(userId);
+}
+
 }

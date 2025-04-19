@@ -62,4 +62,33 @@ export class TransactionsService {
 
     return summary;
   }
+
+  async getMonthlyStats(userId: string) {
+    const transactions = await this.transactionRepository.find({
+      where: { user_id: userId },
+    });
+  
+    const monthlyMap = new Map();
+  
+    for (const tx of transactions) {
+      const date = new Date(tx.transaction_date); // <-- ВАЖЛИВО!
+      const monthKey = `${date.getFullYear()}-${(date.getMonth() + 1)
+        .toString()
+        .padStart(2, '0')}`; // YYYY-MM
+  
+      if (!monthlyMap.has(monthKey)) {
+        monthlyMap.set(monthKey, { month: monthKey, income: 0, expense: 0 });
+      }
+  
+      const entry = monthlyMap.get(monthKey);
+      if (tx.type === 'income') {
+        entry.income += Number(tx.amount);
+      } else {
+        entry.expense += Number(tx.amount);
+      }
+    }
+  
+    return Array.from(monthlyMap.values()).sort((a, b) => a.month.localeCompare(b.month));
+  }
+  
 }

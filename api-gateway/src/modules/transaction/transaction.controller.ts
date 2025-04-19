@@ -2,6 +2,8 @@ import { Controller, Post, Get, Param, Body, Inject, Logger } from '@nestjs/comm
 import { ClientProxy } from '@nestjs/microservices';
 import { CreateTransactionDto } from './dto/transaction.dto';
 import { patterns } from '../patterns';
+import { firstValueFrom } from 'rxjs';
+
 @Controller('transactions')
 export class TransactionController {
   private readonly logger = new Logger(TransactionController.name);
@@ -25,4 +27,12 @@ export class TransactionController {
     this.logger.log(`Fetching transaction summary for user ${userId}`);
     return this.transactionClient.send(patterns.TRANSACTION.GET_SUMMARY, { userId });
   }
+
+  @Get(':userId/monthly')
+async getMonthly(@Param('userId') userId: string) {
+  return firstValueFrom(
+    this.transactionClient.send(patterns.TRANSACTION.GET_MONTHLY_STATS, { userId })
+  );
+}
+
 }

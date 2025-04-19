@@ -1,6 +1,6 @@
 export const patterns = {
   GOAL: {
-    CREATE: 'create_goal',  // Переконайтесь, що це збігається в обох мікросервісах
+    CREATE: 'create_goal',  
     GET: 'get_goals',
     UPDATE: 'update_goal',
     GET_SUMMARY: 'get_goal_summary',
@@ -9,5 +9,6 @@ export const patterns = {
     CREATE: 'create_transaction',
     GET: 'get_transactions',
     GET_SUMMARY: 'get_transaction_summary',
+    GET_MONTHLY_STATS: 'transaction_get_monthly_stats',
   },
 };
