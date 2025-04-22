@@ -22,112 +22,213 @@ function ProfilePage() {
   const [summary, setSummary] = useState(null);
   const [historyData, setHistoryData] = useState([]);
   const [categoryData, setCategoryData] = useState([]);
-  const [error, setError] = useState(null);
+  const [transactions, setTransactions] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+  const [goals, setGoals] = useState([
+    { id: 1, name: "Квартира", status: "active" },
+    { id: 2, name: "Телефон", status: "completed" }
+  ]);
 
   useEffect(() => {
     const payload = getTokenPayload();
-    if (!payload || !payload.memberId) {
-      setError("Invalid token");
-      return;
-    }
+    if (!payload || !payload.memberId) return;
     setUserId(payload.memberId);
   }, []);
 
   useEffect(() => {
     if (!userId) return;
-
+  
     fetchWithAuth(`/transactions/${userId}/summary`)
       .then(res => res.json())
-      .then(data => setSummary(data))
-      .catch(() => setError("Не вдалося завантажити зведену інформацію"));
-
-    fetchWithAuth(`/transactions/${userId}/monthly`)
-      .then(res => res.json())
-      .then(data => setHistoryData(data))
-      .catch(() => setHistoryData([]));
-
+      .then(data => setSummary(data));
+  
     fetchWithAuth(`/transactions/${userId}`)
       .then(res => res.json())
       .then(data => {
+        const sortedTransactions = data.sort((a, b) => 
+          new Date(b.transaction_date) - new Date(a.transaction_date)
+        );
+        setTransactions(sortedTransactions);
+
+        // Дані для лінійного графіку по днях
+        const dailyData = {};
+        sortedTransactions.forEach(tx => {
+          const date = new Date(tx.transaction_date).toLocaleDateString();
+          if (!dailyData[date]) {
+            dailyData[date] = { date, income: 0, expense: 0 };
+          }
+          if (tx.type === 'income') {
+            dailyData[date].income += Number(tx.amount);
+          } else {
+            dailyData[date].expense += Number(tx.amount);
+          }
+        });
+        // Сортування за датами від найменшої до найбільшої
+        setHistoryData(Object.values(dailyData).sort((a, b) => 
+          new Date(a.date.split('.').reverse().join('-')) - new Date(b.date.split('.').reverse().join('-'))
+        ));
+
+        // Дані для кругової діаграми
         const categoryMap = {};
         data.forEach(tx => {
           if (tx.type === 'expense') {
             categoryMap[tx.category] = (categoryMap[tx.category] || 0) + Number(tx.amount);
           }
         });
-        const formatted = Object.entries(categoryMap).map(([name, value]) => ({ name, value }));
+        const formatted = Object.entries(categoryMap).map(([name, value]) => ({
+          name,
+          value
+        }));
         setCategoryData(formatted);
-      })
-      .catch(() => setCategoryData([]));
+      });
   }, [userId]);
-
+  
   return (
-    <div className="dashboard p-6">
-      <h2 className="text-2xl font-semibold mb-4">Профіль користувача</h2>
+    <div className="dashboard">
+      <h2>Профіль користувача</h2>
+      <div style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
+        {/* LEFT SIDE */}
+        <div style={{ flex: 3 }}>
+          {summary && (
+            <div className="summary-box">
+              <h3>Загальний баланс</h3>
+              <p>{summary.income - summary.expense} грн</p>
+            </div>
+          )}
 
-      {error && <p className="text-red-500">{error}</p>}
+          <div className="summary-box">
+            <h3>Доходи та витрати за місяць</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Тип</th>
+                  <th>Сума</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Доходи</td>
+                  <td>{summary?.income} грн</td>
+                </tr>
+                <tr>
+                  <td>Витрати</td>
+                  <td>{summary?.expense} грн</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-      {summary && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-white rounded-xl p-4 shadow">
-            <h3 className="font-medium">Баланс</h3>
-            <p className="text-lg font-bold">{summary.income - summary.expense} грн</p>
+          <div className="summary-box">
+            <h3>Всі транзакції за місяць</h3>
+            {transactions.length > 0 ? (
+              <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                <table style={{ width: '100%' }}>
+                  <thead>
+                    <tr>
+                      <th>Дата</th>
+                      <th>Тип</th>
+                      <th>Категорія</th>
+                      <th>Сума</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {transactions.map((tx, index) => (
+                      <tr key={tx.id || index}>
+                        <td>{tx.transaction_date ? new Date(tx.transaction_date).toLocaleDateString() : '-'}</td>
+                        <td style={{ color: tx.type === 'income' ? 'green' : 'red' }}>
+                          {tx.type === 'income' ? 'Дохід' : 'Витрата'}
+                        </td>
+                        <td>{tx.category || '-'}</td>
+                        <td>{parseFloat(tx.amount).toFixed(2)} грн</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p>Немає транзакцій для відображення</p>
+            )}
           </div>
-          <div className="bg-green-100 rounded-xl p-4 shadow">
-            <h3 className="font-medium">Доходи (місяць)</h3>
-            <p className="text-lg font-bold">{summary.income} грн</p>
+
+          <div className="summary-box">
+            <button onClick={() => setShowForm(prev => !prev)}>Додати</button>
+            {showForm && (
+              <div className="form-group">
+                <input type="number" placeholder="Сума" className="input-field" />
+                <input type="text" placeholder="Категорія" className="input-field" />
+                <input type="text" placeholder="Опис" className="input-field" />
+                <select className="input-field">
+                  <option value="income">Доходи</option>
+                  <option value="expense">Витрати</option>
+                  <option value="description">Опис</option>
+                </select>
+                <button>Зберегти</button>
+              </div>
+            )}
           </div>
-          <div className="bg-red-100 rounded-xl p-4 shadow">
-            <h3 className="font-medium">Витрати (місяць)</h3>
-            <p className="text-lg font-bold">{summary.expense} грн</p>
+
+          <div className="summary-box" style={{ gap: '2rem', padding:'2rem'}}>
+            <h3>Динаміка доходів та витрат (по днях)</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={historyData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="income" stroke="#00C49F" name="Доходи" dot={true} />
+                <Line type="monotone" dataKey="expense" stroke="#FF8042" name="Витрати" dot={true} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="summary-box" style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
+            <div style={{ width: '60%' }}>
+              <h3>Витрати за категоріями</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    dataKey="value"
+                    data={categoryData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={100}
+                    fill="#8884d8"
+                    label={({ name, value }) => `${name}: ${value.toFixed(2)} грн`}
+                  >
+                    {categoryData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value, name) => [`${value.toFixed(2)} грн`, name]} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {categoryData.map((entry, index) => (
+                <div key={`legend-${index}`} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ width: 14, height: 14, backgroundColor: COLORS[index % COLORS.length], display: 'inline-block', borderRadius: '50%' }}></span>
+                  {entry.name}: {entry.value.toFixed(2)} грн
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      )}
 
-      <div className="bg-white p-4 rounded-xl shadow mb-6">
-        <h3 className="text-lg font-semibold mb-2">Динаміка доходів та витрат</h3>
-        {historyData.length === 0 ? (
-          <p>Немає даних</p>
-        ) : (
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={historyData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="income" stroke="#00C49F" name="Доходи" />
-              <Line type="monotone" dataKey="expense" stroke="#FF8042" name="Витрати" />
-            </LineChart>
-          </ResponsiveContainer>
-        )}
-      </div>
-
-      <div className="bg-white p-4 rounded-xl shadow">
-        <h3 className="text-lg font-semibold mb-2">Витрати за категоріями</h3>
-        {categoryData.length === 0 ? (
-          <p>Немає витрат для відображення</p>
-        ) : (
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                dataKey="value"
-                isAnimationActive={false}
-                data={categoryData}
-                cx="50%"
-                cy="50%"
-                outerRadius={100}
-                fill="#8884d8"
-                label
-              >
-                {categoryData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        )}
+        <div style={{ flex: 1 }}>
+          <div className="summary-box">
+            <h3>Фінансові цілі</h3>
+            <ul>
+              {goals.map(goal => (
+                <li key={goal.id} style={{ marginBottom: '1rem' }}>
+                  <p><strong>{goal.name}</strong></p>
+                  <p>Статус: {goal.status === 'active' ? 'Активна' : 'Завершена'}</p>
+                </li>
+              ))}
+            </ul>
+            <button>Додати ціль</button>
+          </div>
+        </div>
       </div>
     </div>
   );
