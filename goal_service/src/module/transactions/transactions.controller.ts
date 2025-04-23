@@ -22,9 +22,4 @@ export class TransactionsController {
     return this.transactionsService.getTransactionSummary(userId);
   }
 
-  @MessagePattern(patterns.TRANSACTION.GET_MONTHLY_STATS)
-async getMonthlyStats({ userId }) {
-  return this.transactionsService.getMonthlyStats(userId);
-}
-
 }

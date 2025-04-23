@@ -1,17 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { fetchWithAuth, getTokenPayload } from "../api";
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  PieChart, Pie, Cell
 } from 'recharts';
 import '.././index.css';
 
@@ -24,11 +15,13 @@ function ProfilePage() {
   const [categoryData, setCategoryData] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [showForm, setShowForm] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
   const [goals, setGoals] = useState([
     { id: 1, name: "Квартира", status: "active" },
     { id: 2, name: "Телефон", status: "completed" }
   ]);
 
+  // Логіка логіну зі старого варіанту
   useEffect(() => {
     const payload = getTokenPayload();
     if (!payload || !payload.memberId) return;
@@ -37,15 +30,17 @@ function ProfilePage() {
 
   useEffect(() => {
     if (!userId) return;
-  
+
+    // Запит для загального балансу (без фільтрації за місяцем)
     fetchWithAuth(`/transactions/${userId}/summary`)
       .then(res => res.json())
       .then(data => setSummary(data));
-  
-    fetchWithAuth(`/transactions/${userId}`)
+
+    // Запит для транзакцій за обраний місяць
+    fetchWithAuth(`/transactions/${userId}?month=${selectedMonth}`)
       .then(res => res.json())
       .then(data => {
-        const sortedTransactions = data.sort((a, b) => 
+        const sortedTransactions = data.sort((a, b) =>
           new Date(b.transaction_date) - new Date(a.transaction_date)
         );
         setTransactions(sortedTransactions);
@@ -63,8 +58,7 @@ function ProfilePage() {
             dailyData[date].expense += Number(tx.amount);
           }
         });
-        // Сортування за датами від найменшої до найбільшої
-        setHistoryData(Object.values(dailyData).sort((a, b) => 
+        setHistoryData(Object.values(dailyData).sort((a, b) =>
           new Date(a.date.split('.').reverse().join('-')) - new Date(b.date.split('.').reverse().join('-'))
         ));
 
@@ -81,11 +75,43 @@ function ProfilePage() {
         }));
         setCategoryData(formatted);
       });
-  }, [userId]);
-  
+
+    // Запит для доходів і витрат за місяць
+    fetchWithAuth(`/transactions/${userId}/summary?month=${selectedMonth}`)
+      .then(res => res.json())
+      .then(data => setSummary(prev => ({ ...prev, ...data })));
+  }, [userId, selectedMonth]);
+
+  // Генерація списку місяців для вибору
+  const generateMonthOptions = () => {
+    const options = [];
+    const startDate = new Date(2020, 0, 1); // Початок з січня 2020
+    const endDate = new Date();
+    while (startDate <= endDate) {
+      const year = startDate.getFullYear();
+      const month = (startDate.getMonth() + 1).toString().padStart(2, '0');
+      const value = `${year}-${month}`; // Формат YYYY-MM
+      const label = startDate.toLocaleString('uk-UA', { month: 'long', year: 'numeric' });
+      options.push({ value, label });
+      startDate.setMonth(startDate.getMonth() + 1);
+    }
+    return options.reverse(); // Найновіші місяці першими
+  };
+
   return (
     <div className="dashboard">
       <h2>Профіль користувача</h2>
+      <div>
+        <label>Оберіть місяць: </label>
+        <select
+          value={selectedMonth}
+          onChange={(e) => setSelectedMonth(e.target.value)}
+        >
+          {generateMonthOptions().map(option => (
+            <option key={option.value} value={option.value}>{option.label}</option>
+          ))}
+        </select>
+      </div>
       <div style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
         {/* LEFT SIDE */}
         <div style={{ flex: 3 }}>
@@ -95,7 +121,6 @@ function ProfilePage() {
               <p>{summary.income - summary.expense} грн</p>
             </div>
           )}
-
           <div className="summary-box">
             <h3>Доходи та витрати за місяць</h3>
             <table>
@@ -108,11 +133,11 @@ function ProfilePage() {
               <tbody>
                 <tr>
                   <td>Доходи</td>
-                  <td>{summary?.income} грн</td>
+                  <td>{summary?.monthlyIncome || 0} грн</td>
                 </tr>
                 <tr>
                   <td>Витрати</td>
-                  <td>{summary?.expense} грн</td>
+                  <td>{summary?.monthlyExpense || 0} грн</td>
                 </tr>
               </tbody>
             </table>
@@ -167,7 +192,7 @@ function ProfilePage() {
             )}
           </div>
 
-          <div className="summary-box" style={{ gap: '2rem', padding:'2rem'}}>
+          <div className="summary-box" style={{ gap: '2rem', padding: '2rem' }}>
             <h3>Динаміка доходів та витрат (по днях)</h3>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={historyData}>

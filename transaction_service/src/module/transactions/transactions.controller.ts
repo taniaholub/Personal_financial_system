@@ -13,18 +13,12 @@ export class TransactionsController {
   }
 
   @MessagePattern(patterns.TRANSACTION.GET)
-  async getUserTransactions({ userId }) {
-    return this.transactionsService.findAll(userId);
+  async getUserTransactions({ userId, month }) {
+    return this.transactionsService.findAll(userId, undefined, undefined, month);
   }
 
   @MessagePattern(patterns.TRANSACTION.GET_SUMMARY)
-  async getTransactionSummary({ userId }) {
-    return this.transactionsService.getTransactionSummary(userId);
+  async getTransactionSummary({ userId, month }) {
+    return this.transactionsService.getTransactionSummary(userId, month);
   }
-
-  @MessagePattern(patterns.TRANSACTION.GET_MONTHLY_STATS)
-async getMonthlyStats({ userId }) {
-  return this.transactionsService.getMonthlyStats(userId);
-}
-
 }

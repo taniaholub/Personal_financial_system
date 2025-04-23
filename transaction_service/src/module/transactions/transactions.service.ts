@@ -18,21 +18,20 @@ export class TransactionsService {
     user_id: string,
     type?: string,
     category?: string,
-    sortBy?: string, // Параметр для сортування
-    sortOrder?: 'ASC' | 'DESC', // Параметр для порядку сортування
+    month?: string, // Новий параметр для фільтрації за місяцем
+    sortBy?: string,
+    sortOrder?: 'ASC' | 'DESC',
   ) {
     const query = this.transactionRepository
       .createQueryBuilder('transaction')
       .where('transaction.user_id = :user_id', { user_id });
 
-    // Фільтрація за типом
     if (type) query.andWhere('transaction.type = :type', { type });
-
-    // Фільтрація за категорією
-    if (category)
-      query.andWhere('transaction.category = :category', { category });
-
-    // Сортування
+    if (category) query.andWhere('transaction.category = :category', { category });
+    if (month) {
+      // Фільтрація за місяцем (YYYY-MM)
+      query.andWhere("TO_CHAR(transaction.transaction_date, 'YYYY-MM') = :month", { month });
+    }
     if (sortBy) {
       query.orderBy(`transaction.${sortBy}`, sortOrder || 'ASC');
     }
@@ -43,12 +42,36 @@ export class TransactionsService {
   delete(id: string) {
     return this.transactionRepository.delete(id);
   }
-  async getTransactionSummary(userId: string) {
-    const transactions = await this.transactionRepository.find({
+
+  async getTransactionSummary(userId: string, month?: string) {
+    const query = this.transactionRepository
+      .createQueryBuilder('transaction')
+      .where('transaction.user_id = :userId', { userId });
+
+    if (month) {
+      query.andWhere("TO_CHAR(transaction.transaction_date, 'YYYY-MM') = :month", { month });
+    }
+
+    const transactions = await query.getMany();
+
+    const monthlySummary = transactions.reduce(
+      (acc, transaction) => {
+        if (transaction.type === 'income') {
+          acc.monthlyIncome += Number(transaction.amount);
+        } else {
+          acc.monthlyExpense += Number(transaction.amount);
+        }
+        return acc;
+      },
+      { monthlyIncome: 0, monthlyExpense: 0 }
+    );
+
+    // Загальний баланс (усі транзакції без фільтрації за місяцем)
+    const allTransactions = await this.transactionRepository.find({
       where: { user_id: userId },
     });
 
-    const summary = transactions.reduce(
+    const totalSummary = allTransactions.reduce(
       (acc, transaction) => {
         if (transaction.type === 'income') {
           acc.income += Number(transaction.amount);
@@ -57,38 +80,10 @@ export class TransactionsService {
         }
         return acc;
       },
-      { income: 0, expense: 0 },
+      { income: 0, expense: 0 }
     );
 
-    return summary;
+    return { ...totalSummary, ...monthlySummary };
   }
 
-  async getMonthlyStats(userId: string) {
-    const transactions = await this.transactionRepository.find({
-      where: { user_id: userId },
-    });
-  
-    const monthlyMap = new Map();
-  
-    for (const tx of transactions) {
-      const date = new Date(tx.transaction_date); 
-      const monthKey = `${date.getFullYear()}-${(date.getMonth() + 1)
-        .toString()
-        .padStart(2, '0')}`; // YYYY-MM
-  
-      if (!monthlyMap.has(monthKey)) {
-        monthlyMap.set(monthKey, { month: monthKey, income: 0, expense: 0 });
-      }
-  
-      const entry = monthlyMap.get(monthKey);
-      if (tx.type === 'income') {
-        entry.income += Number(tx.amount);
-      } else {
-        entry.expense += Number(tx.amount);
-      }
-    }
-  
-    return Array.from(monthlyMap.values()).sort((a, b) => a.month.localeCompare(b.month));
-  }
-  
 }

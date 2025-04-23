@@ -11,8 +11,13 @@ export class UserController {
 
   @Post('registration')
   async registrationUser(@Body() user: User) {
-    this.logger.log('Registration user');
-    return this.userService.registrationUser(user);
+    this.logger.log(`Received registration data: ${JSON.stringify(user)}`);
+    try {
+      return await this.userService.registrationUser(user);
+    } catch (error) {
+      this.logger.error(`Registration error: ${error.message}`);
+      throw new BadRequestException(error.message || 'Registration failed');
+    }
   }
 
   @Post('login')
