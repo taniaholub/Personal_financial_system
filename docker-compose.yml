@@ -1,43 +1,47 @@
+version: "3.8"
+
 services:
   rabbitmq:
-    image: "rabbitmq:management"
+    image: "rabbitmq:3-management-alpine"
     container_name: rabbitmq
     ports:
       - "5672:5672"
       - "15672:15672"
     environment:
-      - RABBITMQ_DEFAULT_USER=guest
-      - RABBITMQ_DEFAULT_PASS=guest
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
     networks:
       - app-network
 
   db:
-    image: "postgres:latest"
+    image: "postgres:15-alpine"
     container_name: postgres
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=1234
-      - POSTGRES_DB=personal_financial_system
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: personal_financial_system
     ports:
       - "1234:5432"
     networks:
       - app-network
 
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: nestjs-app
     ports:
       - "3000:3000"
     environment:
-      - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_PORT=5672
-      - RABBITMQ_USER=guest
-      - RABBITMQ_PASSWORD=guest
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_USERNAME=postgres
-      - DB_PASSWORD=1234
-      - DB_NAME=personal_financial_system
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: guest
+      RABBITMQ_PASSWORD: guest
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: 1234
+      DB_NAME: personal_financial_system
     depends_on:
       - rabbitmq
       - db
@@ -47,16 +51,14 @@ services:
   goal_service:
     build: .
     container_name: goal-service
-    ports:
-      - "3007:3007"
     environment:
-      - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_PORT=5672
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_USERNAME=postgres
-      - DB_PASSWORD=1234
-      - DB_NAME=personal_financial_system
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: 1234
+      DB_NAME: personal_financial_system
     depends_on:
       - rabbitmq
       - db
@@ -67,16 +69,14 @@ services:
   transaction_service:
     build: .
     container_name: transaction-service
-    ports:
-      - "3006:3006"
     environment:
-      - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_PORT=5672
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_USERNAME=postgres
-      - DB_PASSWORD=1234
-      - DB_NAME=personal_financial_system
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: 1234
+      DB_NAME: personal_financial_system
     depends_on:
       - rabbitmq
       - db
@@ -87,16 +87,14 @@ services:
   user_service:
     build: .
     container_name: user-service
-    ports:
-      - "3005:3005"
     environment:
-      - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_PORT=5672
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_USERNAME=postgres
-      - DB_PASSWORD=1234
-      - DB_NAME=personal_financial_system
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: 1234
+      DB_NAME: personal_financial_system
     depends_on:
       - rabbitmq
       - db
