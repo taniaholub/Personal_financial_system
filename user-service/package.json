@@ -21,11 +21,11 @@
     "typeorm": "node -r tsconfig-paths/register -r ts-node/register ./node_modules/typeorm/cli.js -- -d src/modules/orm/config/config.ts"
   },
   "dependencies": {
-    "@nestjs/common": "^11.1.0",
+    "@nestjs/common": "^11.0.16",
     "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^11.0.10",
     "@nestjs/jwt": "^11.0.0",
-    "@nestjs/microservices": "^11.1.0",
+    "@nestjs/microservices": "^11.0.16",
     "@nestjs/platform-express": "^11.0.10",
     "@nestjs/typeorm": "^11.0.0",
     "amqp-connection-manager": "^4.1.14",
