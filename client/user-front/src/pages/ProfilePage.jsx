@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { fetchWithAuth, getTokenPayload } from "../api";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -11,99 +11,207 @@ const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff8042", "#8dd1e1", "#a4de6c"
 function ProfilePage() {
   const [userId, setUserId] = useState(null);
   const [summary, setSummary] = useState(null);
-  const [historyData, setHistoryData] = useState([]);
-  const [categoryData, setCategoryData] = useState([]);
-  const [transactions, setTransactions] = useState([]);
-  const [showForm, setShowForm] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
+  const [historyData, setHistoryData] = useState([]); // Дані для графіку доходів/витрат по днях
+  const [categoryChartData, setCategoryChartData] = useState([]); // Дані для кругової діаграми витрат
+  const [allTransactionsForMonth, setAllTransactionsForMonth] = useState([]); // Усі транзакції за місяць
+  const [showForm, setShowForm] = useState(false); // Керування відображенням форми
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // Поточний місяць (YYYY-MM)
   const [goals, setGoals] = useState([
     { id: 1, name: "Квартира", status: "active" },
     { id: 2, name: "Телефон", status: "completed" }
-  ]);
+  ]); // Список фінансових цілей
 
-  // Логіка логіну зі старого варіанту
+  // Стани для фільтрів транзакцій
+  const [filterType, setFilterType] = useState('all'); // Фільтр за типом (усі, доходи, витрати)
+  const [filterCategory, setFilterCategory] = useState('all'); // Фільтр за категорією
+
+  // Початкові дані для нової транзакції
+  const initialTransactionData = {
+    amount: '',
+    category: '',
+    description: '',
+    type: 'expense',
+    transaction_date: new Date().toISOString().slice(0, 10),
+  };
+  const [newTransactionData, setNewTransactionData] = useState(initialTransactionData);
+
+  // Отримання ID користувача з JWT-токена
   useEffect(() => {
     const payload = getTokenPayload();
     if (!payload || !payload.memberId) return;
-    setUserId(payload.memberId);
+    setUserId(payload.memberId); // Збереження ID користувача
   }, []);
 
-  useEffect(() => {
+  // Функція для отримання всіх даних сторінки
+  const fetchPageData = useCallback(async () => {
     if (!userId) return;
 
-    // Запит для загального балансу (без фільтрації за місяцем)
-    fetchWithAuth(`/transactions/${userId}/summary`)
-      .then(res => res.json())
-      .then(data => setSummary(data));
+    try {
+      // Отримання загального зведення транзакцій
+      const summaryRes = await fetchWithAuth(`/transactions/${userId}/summary`);
+      const summaryData = await summaryRes.json();
+      setSummary(summaryData);
 
-    // Запит для транзакцій за обраний місяць
-    fetchWithAuth(`/transactions/${userId}?month=${selectedMonth}`)
-      .then(res => res.json())
-      .then(data => {
-        const sortedTransactions = data.sort((a, b) =>
-          new Date(b.transaction_date) - new Date(a.transaction_date)
-        );
-        setTransactions(sortedTransactions);
+      // Отримання транзакцій за вибраний місяць
+      const transactionsRes = await fetchWithAuth(`/transactions/${userId}?month=${selectedMonth}`);
+      const transactionsData = await transactionsRes.json();
+      
+      // Сортування транзакцій за датою (від новіших до старіших)
+      const sortedTransactions = [...transactionsData].sort((a, b) =>
+        new Date(b.transaction_date) - new Date(a.transaction_date)
+      );
+      setAllTransactionsForMonth(sortedTransactions);
 
-        // Дані для лінійного графіку по днях
-        const dailyData = {};
-        sortedTransactions.forEach(tx => {
-          const date = new Date(tx.transaction_date).toLocaleDateString();
-          if (!dailyData[date]) {
-            dailyData[date] = { date, income: 0, expense: 0 };
-          }
-          if (tx.type === 'income') {
-            dailyData[date].income += Number(tx.amount);
-          } else {
-            dailyData[date].expense += Number(tx.amount);
-          }
-        });
-        setHistoryData(Object.values(dailyData).sort((a, b) =>
-          new Date(a.date.split('.').reverse().join('-')) - new Date(b.date.split('.').reverse().join('-'))
-        ));
+      // Формування даних для лінійного графіку (щоденні доходи/витрати)
+      const dailyData = {};
+      sortedTransactions.forEach(tx => {
+        const date = new Date(tx.transaction_date).toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit' });
+        if (!dailyData[date]) {
+          dailyData[date] = { date, income: 0, expense: 0, fullDate: new Date(tx.transaction_date) };
+        }
+        if (tx.type === 'income') {
+          dailyData[date].income += Number(tx.amount);
+        } else {
+          dailyData[date].expense += Number(tx.amount);
+        }
+      });
+      setHistoryData(Object.values(dailyData).sort((a, b) => a.fullDate - b.fullDate));
 
-        // Дані для кругової діаграми
-        const categoryMap = {};
-        data.forEach(tx => {
-          if (tx.type === 'expense') {
-            categoryMap[tx.category] = (categoryMap[tx.category] || 0) + Number(tx.amount);
-          }
-        });
-        const formatted = Object.entries(categoryMap).map(([name, value]) => ({
-          name,
-          value
-        }));
-        setCategoryData(formatted);
+      // Формування даних для кругової діаграми (витрати за категоріями)
+      const expenseCategoryMap = {};
+      transactionsData.forEach(tx => {
+        if (tx.type === 'expense' && tx.category) {
+          expenseCategoryMap[tx.category] = (expenseCategoryMap[tx.category] || 0) + Number(tx.amount);
+        }
+      });
+      const formattedExpenseCategories = Object.entries(expenseCategoryMap).map(([name, value]) => ({
+        name,
+        value
+      }));
+      setCategoryChartData(formattedExpenseCategories);
+
+      // Отримання місячного зведення
+      const monthlySummaryRes = await fetchWithAuth(`/transactions/${userId}/summary?month=${selectedMonth}`);
+      const monthlySummaryData = await monthlySummaryRes.json();
+      setSummary(prev => ({ ...prev, ...monthlySummaryData }));
+    } catch (error) {
+      console.error("Error fetching page data:", error);
+    }
+  }, [userId, selectedMonth]);
+
+  useEffect(() => {
+    fetchPageData(); // Виклик функції отримання даних при зміні userId або selectedMonth
+  }, [fetchPageData]);
+
+  // Отримання унікальних категорій з транзакцій
+  const uniqueCategories = useMemo(() => {
+    const categories = new Set();
+    allTransactionsForMonth.forEach(tx => {
+      if (tx.category) {
+        categories.add(tx.category);
+      }
+    });
+    return Array.from(categories).sort();
+  }, [allTransactionsForMonth]);
+
+  // Фільтрація транзакцій для відображення
+  const filteredTransactions = useMemo(() => {
+    return allTransactionsForMonth.filter(tx => {
+      const typeMatch = filterType === 'all' || tx.type === filterType;
+      const categoryMatch = filterCategory === 'all' || tx.category === filterCategory;
+      return typeMatch && categoryMatch;
+    });
+  }, [allTransactionsForMonth, filterType, filterCategory]);
+
+  // Обробник зміни полів форми
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewTransactionData(prev => ({ ...prev, [name]: value }));
+  };
+
+  // Обробник додавання нової транзакції
+  const handleAddTransaction = async (e) => {
+    e.preventDefault();
+    if (!userId) {
+      alert("Не знайдено ID користувача. Будь ласка, увійдіть знову.");
+      return;
+    }
+
+    // Перевірка коректності суми
+    if (!newTransactionData.amount || isNaN(parseFloat(newTransactionData.amount)) || parseFloat(newTransactionData.amount) <= 0) {
+      alert("Будь ласка, введіть коректну суму.");
+      return;
+    }
+    if (!newTransactionData.transaction_date) {
+      alert("Будь ласка, оберіть дату.");
+      return;
+    }
+
+    // Формування даних для запиту
+    const payload = {
+      user_id: userId,
+      amount: parseFloat(newTransactionData.amount),
+      type: newTransactionData.type,
+      transaction_date: newTransactionData.transaction_date,
+    };
+    if (newTransactionData.category && newTransactionData.category.trim() !== "") {
+      payload.category = newTransactionData.category.trim();
+    }
+    if (newTransactionData.description && newTransactionData.description.trim() !== "") {
+      payload.description = newTransactionData.description.trim();
+    }
+
+    try {
+      // Відправлення запиту на додавання транзакції
+      const response = await fetchWithAuth('/transactions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
       });
 
-    // Запит для доходів і витрат за місяць
-    fetchWithAuth(`/transactions/${userId}/summary?month=${selectedMonth}`)
-      .then(res => res.json())
-      .then(data => setSummary(prev => ({ ...prev, ...data })));
-  }, [userId, selectedMonth]);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Не вдалося додати транзакцію');
+      }
+
+      setNewTransactionData(initialTransactionData); // Скидання форми
+      setShowForm(false); // Приховування форми
+      alert('Транзакцію успішно додано!');
+      fetchPageData(); // Оновлення даних сторінки
+    } catch (error) {
+      console.error("Помилка при додаванні транзакції:", error);
+      alert(`Помилка: ${error.message}`);
+    }
+  };
 
   // Генерація списку місяців для вибору
   const generateMonthOptions = () => {
     const options = [];
-    const startDate = new Date(2020, 0, 1); // Початок з січня 2020
+    const startDate = new Date(2020, 0, 1);
     const endDate = new Date();
-    while (startDate <= endDate) {
-      const year = startDate.getFullYear();
-      const month = (startDate.getMonth() + 1).toString().padStart(2, '0');
-      const value = `${year}-${month}`; // Формат YYYY-MM
-      const label = startDate.toLocaleString('uk-UA', { month: 'long', year: 'numeric' });
+    let currentDate = new Date(endDate);
+
+    while (currentDate >= startDate) {
+      const year = currentDate.getFullYear();
+      const month = (currentDate.getMonth() + 1).toString().padStart(2, '0');
+      const value = `${year}-${month}`;
+      const label = currentDate.toLocaleString('uk-UA', { month: 'long', year: 'numeric' });
       options.push({ value, label });
-      startDate.setMonth(startDate.getMonth() + 1);
+      currentDate.setMonth(currentDate.getMonth() - 1);
     }
-    return options.reverse(); // Найновіші місяці першими
+    return options;
   };
 
   return (
     <div className="dashboard">
       <h2>Профіль користувача</h2>
       <div>
-        <label>Оберіть місяць: </label>
+        <label htmlFor="month-select">Оберіть місяць: </label>
         <select
+          id="month-select"
+          className="input-field"
           value={selectedMonth}
           onChange={(e) => setSelectedMonth(e.target.value)}
         >
@@ -112,17 +220,16 @@ function ProfilePage() {
           ))}
         </select>
       </div>
-      <div style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
-        {/* LEFT SIDE */}
-        <div style={{ flex: 3 }}>
+      <div className="flex-container">
+        <div className="left-panel">
           {summary && (
             <div className="summary-box">
               <h3>Загальний баланс</h3>
-              <p>{summary.income - summary.expense} грн</p>
+              <p>{(summary.income - summary.expense).toFixed(2)} грн</p>
             </div>
           )}
           <div className="summary-box">
-            <h3>Доходи та витрати за місяць</h3>
+            <h3>Доходи та витрати за місяць ({new Date(selectedMonth + '-01').toLocaleString('uk-UA', { month: 'long', year: 'numeric' })})</h3>
             <table>
               <thead>
                 <tr>
@@ -133,11 +240,11 @@ function ProfilePage() {
               <tbody>
                 <tr>
                   <td>Доходи</td>
-                  <td>{summary?.monthlyIncome || 0} грн</td>
+                  <td>{(summary?.monthlyIncome || 0).toFixed(2)} грн</td>
                 </tr>
                 <tr>
                   <td>Витрати</td>
-                  <td>{summary?.monthlyExpense || 0} грн</td>
+                  <td>{(summary?.monthlyExpense || 0).toFixed(2)} грн</td>
                 </tr>
               </tbody>
             </table>
@@ -145,113 +252,211 @@ function ProfilePage() {
 
           <div className="summary-box">
             <h3>Всі транзакції за місяць</h3>
-            {transactions.length > 0 ? (
-              <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                <table style={{ width: '100%' }}>
+            <div className="filter-container">
+              <div>
+                <label htmlFor="filter-type" className="filter-label">Тип:</label>
+                <select 
+                  id="filter-type" 
+                  className="input-field filter-type-select"
+                  value={filterType} 
+                  onChange={(e) => setFilterType(e.target.value)}
+                >
+                  <option value="all">Всі типи</option>
+                  <option value="income">Доходи</option>
+                  <option value="expense">Витрати</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="filter-category" className="filter-label">Категорія:</label>
+                <select 
+                  id="filter-category" 
+                  className="input-field filter-category-select"
+                  value={filterCategory} 
+                  onChange={(e) => setFilterCategory(e.target.value)}
+                  disabled={uniqueCategories.length === 0}
+                >
+                  <option value="all">Всі категорії</option>
+                  {uniqueCategories.map(category => (
+                    <option key={category} value={category}>{category}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {filteredTransactions.length > 0 ? (
+              <div className="transaction-table-container">
+                <table className="transaction-table">
                   <thead>
                     <tr>
                       <th>Дата</th>
                       <th>Тип</th>
                       <th>Категорія</th>
                       <th>Сума</th>
+                      <th>Опис</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {transactions.map((tx, index) => (
-                      <tr key={tx.id || index}>
-                        <td>{tx.transaction_date ? new Date(tx.transaction_date).toLocaleDateString() : '-'}</td>
-                        <td style={{ color: tx.type === 'income' ? 'green' : 'red' }}>
+                    {filteredTransactions.map((tx) => ( 
+                      <tr key={tx.id || `${tx.transaction_date}-${tx.amount}-${tx.type}-${tx.category}`}>
+                        <td>{tx.transaction_date ? new Date(tx.transaction_date).toLocaleDateString('uk-UA') : '-'}</td>
+                        <td className={tx.type === 'income' ? 'type-income' : 'type-expense'}>
                           {tx.type === 'income' ? 'Дохід' : 'Витрата'}
                         </td>
                         <td>{tx.category || '-'}</td>
                         <td>{parseFloat(tx.amount).toFixed(2)} грн</td>
+                        <td>{tx.description || '-'}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
             ) : (
-              <p>Немає транзакцій для відображення</p>
+              <p>Немає транзакцій для відображення за обраними фільтрами.</p>
             )}
           </div>
 
           <div className="summary-box">
-            <button onClick={() => setShowForm(prev => !prev)}>Додати</button>
+            <button onClick={() => setShowForm(prev => !prev)} className="button-primary">
+              {showForm ? 'Скасувати' : 'Додати транзакцію'}
+            </button>
             {showForm && (
-              <div className="form-group">
-                <input type="number" placeholder="Сума" className="input-field" />
-                <input type="text" placeholder="Категорія" className="input-field" />
-                <input type="text" placeholder="Опис" className="input-field" />
-                <select className="input-field">
-                  <option value="income">Доходи</option>
-                  <option value="expense">Витрати</option>
-                  <option value="description">Опис</option>
-                </select>
-                <button>Зберегти</button>
-              </div>
+              <form onSubmit={handleAddTransaction} className="form-container">
+                <div className="form-group">
+                  <label htmlFor="amount">Сума:</label>
+                  <input
+                    type="number"
+                    id="amount"
+                    name="amount"
+                    placeholder="0.00"
+                    className="input-field"
+                    value={newTransactionData.amount}
+                    onChange={handleInputChange}
+                    step="0.01"
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="type">Тип:</label>
+                  <select
+                    id="type"
+                    name="type"
+                    className="input-field"
+                    value={newTransactionData.type}
+                    onChange={handleInputChange}
+                    required
+                  >
+                    <option value="expense">Витрата</option>
+                    <option value="income">Дохід</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="category">Категорія {newTransactionData.type === 'expense' ? '(обов\'язково для витрат)' : ''}:</label>
+                  <input
+                    type="text"
+                    id="category"
+                    name="category"
+                    placeholder="Напр. Їжа, Транспорт, Зарплата"
+                    className="input-field"
+                    value={newTransactionData.category}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="transaction_date">Дата:</label>
+                  <input
+                    type="date"
+                    id="transaction_date"
+                    name="transaction_date"
+                    className="input-field"
+                    value={newTransactionData.transaction_date}
+                    onChange={handleInputChange}
+                    max={new Date().toISOString().split("T")[0]}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="description">Опис (необов\'язково):</label>
+                  <textarea
+                    id="description"
+                    name="description"
+                    placeholder="Додаткова інформація"
+                    className="input-field"
+                    value={newTransactionData.description}
+                    onChange={handleInputChange}
+                    rows="3"
+                  />
+                </div>
+                <button type="submit" className="button-primary">Зберегти транзакцію</button>
+              </form>
             )}
           </div>
 
-          <div className="summary-box" style={{ gap: '2rem', padding: '2rem' }}>
+          <div className="summary-box chart-container">
             <h3>Динаміка доходів та витрат (по днях)</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={historyData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="income" stroke="#00C49F" name="Доходи" dot={true} />
-                <Line type="monotone" dataKey="expense" stroke="#FF8042" name="Витрати" dot={true} />
-              </LineChart>
-            </ResponsiveContainer>
+            {historyData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={historyData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="income" stroke="#00C49F" name="Доходи" dot={false} strokeWidth={2} />
+                  <Line type="monotone" dataKey="expense" stroke="#FF8042" name="Витрати" dot={false} strokeWidth={2} />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (<p>Недостатньо даних для відображення графіку.</p>)}
           </div>
 
-          <div className="summary-box" style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
-            <div style={{ width: '60%' }}>
-              <h3>Витрати за категоріями</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    dataKey="value"
-                    data={categoryData}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={100}
-                    fill="#8884d8"
-                    label={({ name, value }) => `${name}: ${value.toFixed(2)} грн`}
-                  >
-                    {categoryData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value, name) => [`${value.toFixed(2)} грн`, name]} />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {categoryData.map((entry, index) => (
-                <div key={`legend-${index}`} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ width: 14, height: 14, backgroundColor: COLORS[index % COLORS.length], display: 'inline-block', borderRadius: '50%' }}></span>
-                  {entry.name}: {entry.value.toFixed(2)} грн
+          <div className="summary-box chart-container">
+            <h3>Витрати за категоріями (за місяць)</h3>
+            {categoryChartData.length > 0 ? (
+              <div className="pie-chart-container">
+                <div className="pie-chart-wrapper">
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        dataKey="value"
+                        data={categoryChartData}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={100}
+                        fill="#8884d8"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      >
+                        {categoryChartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value, name) => [`${value.toFixed(2)} грн`, name]} />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
                 </div>
-              ))}
-            </div>
+              </div>
+            ) : (<p>Немає даних про витрати за категоріями за цей місяць.</p>)}
           </div>
         </div>
 
-        <div style={{ flex: 1 }}>
+        <div className="right-panel">
           <div className="summary-box">
             <h3>Фінансові цілі</h3>
-            <ul>
-              {goals.map(goal => (
-                <li key={goal.id} style={{ marginBottom: '1rem' }}>
-                  <p><strong>{goal.name}</strong></p>
-                  <p>Статус: {goal.status === 'active' ? 'Активна' : 'Завершена'}</p>
-                </li>
-              ))}
-            </ul>
-            <button>Додати ціль</button>
+            {goals.length > 0 ? (
+              <ul>
+                {goals.map(goal => (
+                  <li key={goal.id} className={`goal-item ${goal.status === 'active' ? 'goal-active' : 'goal-completed'}`}>
+                    <p><strong>{goal.name}</strong></p>
+                    <p>Статус:
+                      <span className={`status-badge ${goal.status === 'active' ? 'status-active' : 'status-completed'}`}>
+                        {goal.status === 'active' ? 'Активна' : 'Завершена'}
+                      </span>
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            ) : <p>Цілі ще не додано.</p>}
+            <button className="button-secondary">Додати ціль</button>
           </div>
         </div>
       </div>

@@ -1,4 +1,3 @@
-// api.js
 const API_URL = process.env.REACT_APP_API_URL || '';
 let accessToken = localStorage.getItem('access_token');
 let refreshToken = localStorage.getItem('refresh_token');
@@ -6,34 +5,34 @@ let refreshToken = localStorage.getItem('refresh_token');
 export function setTokens(tokens) {
   if (tokens.access_token) {
     accessToken = tokens.access_token;
-    localStorage.setItem('access_token', tokens.access_token);
+    localStorage.setItem('access_token', tokens.access_token); // Зберігання токена доступу в локальному сховищі
   }
   
   if (tokens.refresh_token) {
     refreshToken = tokens.refresh_token;
-    localStorage.setItem('refresh_token', tokens.refresh_token);
+    localStorage.setItem('refresh_token', tokens.refresh_token); // Зберігання refresh-токена
   }
 }
 
 export function clearTokens() {
   accessToken = null;
   refreshToken = null;
-  localStorage.removeItem('access_token');
-  localStorage.removeItem('refresh_token');
+  localStorage.removeItem('access_token'); // Видалення токена доступу
+  localStorage.removeItem('refresh_token'); // Видалення refresh-токена
 }
 
 export function getTokenPayload() {
   if (!accessToken) return null;
   
   try {
-    // Split token and get payload part (second part)
+    // Розділення токена та отримання payload (друга частина JWT)
     const base64Url = accessToken.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
     const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
       return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
     }).join(''));
 
-    return JSON.parse(jsonPayload);
+    return JSON.parse(jsonPayload); // Парсинг payload у JSON
   } catch (e) {
     console.error('[getTokenPayload] Error decoding token:', e);
     return null;
@@ -42,10 +41,11 @@ export function getTokenPayload() {
 
 export async function refreshAccessToken() {
   if (!refreshToken) {
-    throw new Error('No refresh token available');
+    throw new Error('No refresh token available'); // Перевірка наявності refresh-токена
   }
   
   try {
+    // Відправлення запиту на оновлення токена
     const response = await fetch(`${API_URL}/auth/refresh-tokens`, {
       method: 'POST',
       headers: {
@@ -55,15 +55,15 @@ export async function refreshAccessToken() {
     });
     
     if (!response.ok) {
-      throw new Error('Failed to refresh token');
+      throw new Error('Failed to refresh token'); // Обробка помилки сервера
     }
     
     const tokens = await response.json();
-    setTokens(tokens);
+    setTokens(tokens); // Оновлення токенів
     return tokens.access_token;
   } catch (error) {
     console.error('[refreshAccessToken] Error:', error);
-    clearTokens();
+    clearTokens(); // Очищення токенів у разі помилки
     throw error;
   }
 }
@@ -73,33 +73,33 @@ export async function fetchWithAuth(endpoint, options = {}) {
   
   if (!accessToken) {
     console.error('[fetchWithAuth] No access token available');
-    throw new Error('Not authenticated');
+    throw new Error('Not authenticated'); // Перевірка наявності токена доступу
   }
   
-  // Ensure headers exist
+  // Забезпечення існування заголовків
   options.headers = options.headers || {};
   
-  // Add authorization header
+  // Додавання заголовка авторизації
   options.headers.Authorization = `Bearer ${accessToken}`;
   
   try {
-    // Make the request
+    // Формування повного URL для запиту
     const url = `${API_URL}${endpoint}`;
     console.log(`[fetchWithAuth] Sending request to ${url} with token ${accessToken}`);
     
     const response = await fetch(url, options);
     console.log(`[fetchWithAuth] Response status from ${endpoint}: ${response.status}`);
     
-    // If token expired (401), try refreshing
+    // Обробка випадку простроченого токена (401)
     if (response.status === 401) {
       console.log('[fetchWithAuth] Token expired, refreshing...');
       try {
         const newToken = await refreshAccessToken();
         
-        // Update authorization header with new token
+        // Оновлення заголовка авторизації з новим токеном
         options.headers.Authorization = `Bearer ${newToken}`;
         
-        // Retry the request
+        // Повторення запиту з новим токеном
         console.log('[fetchWithAuth] Retrying with new token');
         return fetch(url, options);
       } catch (refreshError) {

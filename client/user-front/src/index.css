@@ -1,4 +1,5 @@
 body {
+  /* Загальні налаштування для тіла сторінки: відступи, фон, шрифти, згладжування. */
   margin: 0;
   background-color: #f5f7fa;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -8,10 +9,12 @@ body {
 }
 
 h2, h3 {
+  /* Відступи для заголовків. */
   margin-bottom: 0.5rem;
 }
 
 button {
+  /* Основні стилі для кнопок: фон, колір тексту, рамки, відступи, заокруглення, шрифт, курсор, анімація. */
   background-color: #2563eb;
   color: white;
   border: none;
@@ -23,10 +26,12 @@ button {
 }
 
 button:hover {
+  /* Зміна фону кнопки при наведенні. */
   background-color: #1e40af;
 }
 
 .input-field {
+  /* Стилі для полів вводу: ширина, відступи, заокруглення, рамка, розмір шрифту. */
   width: 100%;
   padding: 0.6rem;
   margin-bottom: 1rem;
@@ -36,6 +41,7 @@ button:hover {
 }
 
 select.input-field {
+  /* Кастомізація вигляду для елементів <select>: прибирає стандартну стрілку, додає кастомну іконку. */
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23666666'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
@@ -44,7 +50,9 @@ select.input-field {
   padding-right: 2rem;
 }
 
+/* --- Стилі для форм авторизації --- */
 .login-form, .register-form {
+  /* Контейнер для форм входу/реєстрації: розміри, центрування, фон, відступи, заокруглення, тінь. */
   max-width: 400px;
   margin: 60px auto;
   background: white;
@@ -54,6 +62,7 @@ select.input-field {
 }
 
 .form-group {
+  /* Групування елементів форми: відступи, фон, заокруглення. */
   margin-bottom: 1rem;
   padding: 1rem;
   background-color: #f9fafb;
@@ -62,12 +71,14 @@ select.input-field {
 }
 
 .error-message {
+  /* Стилізація повідомлень про помилки: колір, відступ. */
   color: #dc2626;
   margin-bottom: 1rem;
 }
 
-/* Dashboard / Profile */
+/* --- Стилі для сторінки Профілю (Dashboard / Profile) --- */
 .dashboard {
+  /* Головний контейнер сторінки профілю: розміри, центрування, фон, відступи, заокруглення, тінь. */
   max-width: 1200px;
   margin: 40px auto;
   background-color: #fff;
@@ -76,8 +87,8 @@ select.input-field {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-
 .summary-box {
+  /* Блоки для відображення зведеної інформації: фон, відступи, заокруглення, тінь. */
   background-color: white;
   padding: 1.5rem;
   border-radius: 12px;
@@ -86,58 +97,65 @@ select.input-field {
 }
 
 .summary-box h3 {
+  /* Заголовки всередині інформаційних блоків: колір, розмір, відступ. */
   color: #374151;
   font-size: 1.125rem;
   margin-bottom: 1rem;
 }
 
 table {
+  /* Базові стилі для таблиць: об'єднання меж, ширина, відступ. */
   border-collapse: collapse;
   width: 100%;
   margin-bottom: 1rem;
 }
 
 th, td {
+  /* Стилі для комірок таблиці (заголовків та даних): відступи, вирівнювання, нижня межа. */
   padding: 0.75rem;
   text-align: left;
   border-bottom: 1px solid #e5e7eb;
 }
 
 th {
+  /* Стилі для заголовків таблиці: шрифт, колір. */
   font-weight: 600;
   color: #374151;
 }
 
-tr {
-  transition: background-color 0.2s ease;
-}
-
 tr:hover {
+  /* Зміна фону рядка таблиці при наведенні. */
   background-color: #f9fafb;
 }
 
-/* Goal styles */
+/* --- Стилі для фінансових цілей --- */
 .goal-item {
+  /* Оформлення елемента списку цілей: відступи, заокруглення, рамка, тип списку. */
   padding: 0.75rem;
   border-radius: 8px;
   border: 1px solid #e5e7eb;
   margin-bottom: 0.75rem;
+  list-style-type: none;
 }
 
 .goal-item p {
+  /* Відступи для тексту всередині елемента цілі. */
   margin: 0.25rem 0;
 }
 
 .goal-active {
+  /* Візуальне виділення активної цілі (ліва рамка). */
   border-left: 4px solid #3b82f6;
 }
 
 .goal-completed {
+  /* Візуальне виділення завершеної цілі (ліва рамка, фон). */
   border-left: 4px solid #10b981;
   background-color: #f0fdf4;
 }
 
 .status-badge {
+  /* Стилізація значка статусу цілі: відображення, відступи, шрифт, заокруглення. */
   display: inline-block;
   padding: 0.25rem 0.5rem;
   font-size: 0.75rem;
@@ -146,57 +164,131 @@ tr:hover {
 }
 
 .status-active {
+  /* Кольори для активного статусу. */
   background-color: #dbeafe;
   color: #1e40af;
 }
 
 .status-completed {
+  /* Кольори для завершеного статусу. */
   background-color: #d1fae5;
   color: #065f46;
 }
 
-/* Layout */
+/* --- Стилі для розмітки сторінки (Layout) --- */
 .flex-container {
+  /* Flex-контейнер для основного контенту сторінки: розташування елементів, відступи. */
   display: flex;
   gap: 2rem;
   align-items: flex-start;
 }
 
 .left-panel {
+  /* Ліва панель: гнучкість (пропорція ширини). */
   flex: 3;
 }
 
 .right-panel {
+  /* Права панель: гнучкість (пропорція ширини). */
   flex: 1;
 }
 
-/* Chart legends */
+/* --- Стилі для легенди графіків --- */
 .chart-legend {
+  /* Контейнер для легенди: розташування елементів, відступи. */
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
 .legend-item {
+  /* Елемент легенди: розташування маркера та тексту, відступи. */
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
 .legend-color {
+  /* Кольоровий маркер в легенді: розміри, заокруглення. */
   width: 14px;
   height: 14px;
   border-radius: 50%;
   display: inline-block;
 }
 
-/* Responsive adjustments */
+/* --- Адаптивні стилі --- */
 @media (max-width: 768px) {
+  /* Зміни для екранів шириною до 768px (планшети, мобільні). */
   .flex-container {
+    /* Основний контент відображається вертикально. */
     flex-direction: column;
   }
   
   .right-panel {
+    /* Права панель займає всю ширину. */
     width: 100%;
   }
+}
+
+/* --- Додаткові стилі для сторінки Профілю --- */
+.filter-container {
+  /* Контейнер для фільтрів транзакцій: розташування, відступи, перенос елементів. */
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.filter-label {
+  /* Лейбли для фільтрів: відступ. */
+  margin-right: 0.5rem;
+}
+
+.filter-type-select, .filter-category-select {
+  /* Мінімальна ширина для селектів фільтрів. */
+  min-width: 150px; /* для типу */
+}
+.filter-category-select {
+  min-width: 200px; /* для категорії */
+}
+
+.transaction-table-container {
+  /* Контейнер для таблиці транзакцій: обмеження висоти, вертикальна прокрутка. */
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.transaction-table {
+  /* Ширина таблиці транзакцій. */
+  width: 100%;
+}
+
+.type-income {
+  /* Колір тексту для доходів. */
+  color: green;
+}
+
+.type-expense {
+  /* Колір тексту для витрат. */
+  color: red;
+}
+
+.chart-container {
+  /* Відступи для контейнера з графіком. */
+  padding: 1rem;
+}
+
+.pie-chart-container {
+  /* Контейнер для кругової діаграми: розташування, відступи, перенос. */
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2rem;
+}
+
+.pie-chart-wrapper {
+  /* Обгортка для кругової діаграми: гнучкість, мінімальна ширина. */
+  flex: 1 1 250px;
+  min-width: 250px;
 }
