@@ -1,0 +1,48 @@
+name: Docker Compose CI
+
+on:
+  push:
+    branches:
+      - lab1test
+  pull_request:
+    branches:
+      - lab1test
+
+jobs:
+  check-rabbitmq:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Build and start Docker containers with Docker Compose
+        run: |
+          docker compose -f docker-compose.yml up -d
+
+      - name: Wait for RabbitMQ AMQP port to be available
+        run: |
+          echo "Waiting for RabbitMQ AMQP port to be available..."
+          until nc -z -v -w30 rabbitmq 5672; do
+            echo "Waiting for RabbitMQ..."
+            sleep 5
+          done
+          echo "RabbitMQ AMQP port is accessible!"
+
+      - name: Test RabbitMQ management API connection
+        run: |
+          echo "Testing RabbitMQ management API connection..."
+          curl -s --fail http://rabbitmq:15672/api/overview --user guest:guest
+          echo "RabbitMQ management API connection successful!"
+
