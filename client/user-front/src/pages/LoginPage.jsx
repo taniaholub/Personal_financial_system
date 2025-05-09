@@ -39,7 +39,7 @@ export default function LoginPage({ navigate }) {
       // Парсинг відповіді в об'єкт
       const data = JSON.parse(text);
 
-      // Універсальний спосіб отримання токенів, незалежно від їх назви у відповіді
+      // Універсальний спосіб отримання токенів
       const tokens = {
         access_token: data.access_token || data.accessToken || data.token,
         refresh_token: data.refresh_token || data.refreshToken || data.refresh,

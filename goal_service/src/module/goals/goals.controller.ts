@@ -27,10 +27,6 @@ async createGoal(goalData) {
 }
 
 
-
-  
-
-
   // Обробка повідомлень для отримання цілей користувача
   @MessagePattern(patterns.GOAL.GET)
   async getUserGoals({ userId }) {
