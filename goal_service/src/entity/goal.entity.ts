@@ -20,8 +20,12 @@ export class Goal {
   @Column({ type: 'timestamp' })
   deadline: Date;
 
-  @Column({ type: 'enum', enum: ['in_progress', 'completed', 'failed'] })
-  status: 'in_progress' | 'completed' | 'failed';
+@Column({ 
+  type: 'enum', 
+  enum: ['in_progress', 'completed', 'failed'], 
+  default: 'in_progress' // Важливо для існуючих рядків
+})
+status: 'in_progress' | 'completed' | 'failed';
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;

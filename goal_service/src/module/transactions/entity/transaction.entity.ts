@@ -1,3 +1,4 @@
+//goal_service//src//module/transaction/entity
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
 @Entity('transactions')

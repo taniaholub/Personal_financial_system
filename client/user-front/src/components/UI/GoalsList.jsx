@@ -2,6 +2,7 @@
 import { formatDate, calculateProgress } from '../../utils/utils';
 
 const GoalsList = ({ goals }) => {
+   console.log("[GoalsList] Received props:", { goals }); 
   const getGoalStatusText = (status) => {
     switch (status) {
       case 'in_progress':

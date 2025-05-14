@@ -1,21 +1,18 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { Transport } from '@nestjs/microservices';
+
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.connectMicroservice({
-    transport: Transport.RMQ,
-    options: {
-      urls: ['amqp://guest:guest@127.0.0.1:5672'],
-      queue: 'goal_service', // використовуємо ту ж назву, що й у клієнтському проксі
-      queueOptions: { durable: false },
-    },
+  app.enableCors({
+    origin: 'http://localhost:3001', 
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true,
   });
 
-  await app.startAllMicroservices();
-  await app.listen(3000);
-  console.log('API Gateway is running on http://localhost:3000');
+
+  await app.listen(3000); // Або ваш порт для api-gateway
+  console.log(`API Gateway is running on http://localhost:${await app.getUrl().then(url => new URL(url).port)}`);
 }
 bootstrap();

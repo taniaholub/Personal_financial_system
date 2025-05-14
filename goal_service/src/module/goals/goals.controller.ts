@@ -9,20 +9,19 @@ import { Transaction } from '../transactions/dto/transactions.dto';
 export class GoalsController {
   constructor(private readonly goalsService: GoalsService) {}
 
-  // Обробка повідомлень для створення нової цілі
-// GoalsController (в мікросервісі)
-@MessagePattern(patterns.GOAL.CREATE)  // Це має бути точне співпадіння з патерном у patterns.ts
+
+@MessagePattern(patterns.GOAL.CREATE) 
 async createGoal(goalData) {
   console.log('Received goal data:', goalData);  // Перевірка, чи приходять дані
   try {
     return this.goalsService.create(goalData);  // Викликаємо сервіс для створення цілі
   } catch (error: unknown) {
     if (error instanceof Error) {
-      console.error('Error in createGoal service:', error.message);  // Лог помилки
+      console.error('Error in createGoal service:', error.message);  
     } else {
-      console.error('Unknown error in createGoal service:', error);  // Лог для невідомої помилки
+      console.error('Unknown error in createGoal service:', error);  
     }
-    throw error;  // Перекидаємо помилку далі
+    throw error;  
   }
 }
 
@@ -39,9 +38,9 @@ async createGoal(goalData) {
     return this.goalsService.update(id, goalData);
   }
 
-  // Підписка на подію створення транзакції для оновлення поточної суми цілей
-  @MessagePattern(patterns.GOAL.GET_SUMMARY)
-  async onTransactionCreated(transaction: Transaction) {
-    await this.goalsService.updateCurrentAmount(transaction.user_id);
-  }
+  // // Підписка на подію створення транзакції для оновлення поточної суми цілей
+  // @MessagePattern(patterns.GOAL.GET_SUMMARY)
+  // async onTransactionCreated(transaction: Transaction) {
+  //   await this.goalsService.updateCurrentAmount(transaction.user_id);
+  // }
 }

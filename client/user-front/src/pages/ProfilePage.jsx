@@ -35,14 +35,14 @@ function ProfilePage() {
   const initialGoalData = {
     goal_name: '',
     target_amount: '',
-    deadline: '',
+    deadline: new Date().toISOString().slice(0, 10),
   };
   const [newGoalData, setNewGoalData] = useState(initialGoalData);
   const [showGoalForm, setShowGoalForm] = useState(false);
 
   useEffect(() => {
     const payload = getTokenPayload();
-    if (payload && payload.memberId) {
+    if (payload?.memberId) {
       setUserId(payload.memberId);
     } else {
       console.error("User not authenticated or memberId not found in token.");
@@ -51,23 +51,38 @@ function ProfilePage() {
 
   const fetchGoals = useCallback(async () => {
     if (!userId) return;
+
+    const currentAccessToken = localStorage.getItem('access_token');
+    if (!currentAccessToken) {
+      console.error("No access token found in localStorage.");
+      return;
+    }
+
     try {
-      const response = await fetchWithAuth(`/goals/${userId}`);
+      const API_BASE_URL = 'http://localhost:3001';
+      const response = await fetch(`${API_BASE_URL}/goals/${userId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${currentAccessToken}`,
+          'Accept': 'application/json',
+        }
+      });
+
       if (!response.ok) {
         const errorText = await response.text();
-        let errorMessage = `Не вдалося завантажити цілі: ${response.status} ${response.statusText}`;
-        try {
-          const errorData = JSON.parse(errorText);
-          errorMessage = errorData.message || errorMessage;
-        } catch (e) {
-          if (errorText) errorMessage += ` - ${errorText}`;
-        }
-        throw new Error(errorMessage);
+        console.error(`Не вдалося завантажити цілі: ${response.status} ${response.statusText}`, errorText);
+        throw new Error(errorText);
       }
+
       const data = await response.json();
-      setGoals(Array.isArray(data) ? data : []);
+      if (Array.isArray(data)) {
+        setGoals(data);
+      } else {
+        setGoals([]);
+      }
+
     } catch (error) {
-      console.error("Помилка завантаження цілей:", error);
+      console.error("Помилка при завантаженні цілей:", error);
       setGoals([]);
     }
   }, [userId]);
@@ -106,10 +121,7 @@ function ProfilePage() {
           expenseCategoryMap[tx.category] = (expenseCategoryMap[tx.category] || 0) + Number(tx.amount);
         }
       });
-      const formattedExpenseCategories = Object.entries(expenseCategoryMap).map(([name, value]) => ({
-        name,
-        value
-      }));
+      const formattedExpenseCategories = Object.entries(expenseCategoryMap).map(([name, value]) => ({ name, value }));
       setCategoryChartData(formattedExpenseCategories);
 
       const monthlySummaryRes = await fetchWithAuth(`/transactions/${userId}/summary?month=${selectedMonth}`);
@@ -129,9 +141,18 @@ function ProfilePage() {
   useEffect(() => {
     if (userId) {
       fetchPageData();
-      fetchGoals();
     }
-  }, [userId, fetchPageData, fetchGoals, selectedMonth]);
+  }, [userId, selectedMonth, fetchPageData]);
+
+  useEffect(() => {
+    if (userId) {
+      fetchGoals();
+      const intervalId = setInterval(() => {
+        fetchGoals();
+      }, 30000);
+      return () => clearInterval(intervalId);
+    }
+  }, [userId, fetchGoals]);
 
   const uniqueCategories = useMemo(() => {
     const categories = new Set();
@@ -150,7 +171,6 @@ function ProfilePage() {
       return typeMatch && categoryMatch;
     });
   }, [allTransactionsForMonth, filterType, filterCategory]);
-
   const handleTransactionInputChange = (e) => {
     const { name, value } = e.target;
     setNewTransactionData(prev => ({ ...prev, [name]: value }));
@@ -195,8 +215,8 @@ function ProfilePage() {
       setNewTransactionData(initialTransactionData);
       setShowTransactionForm(false);
       alert('Транзакцію успішно додано!');
-      fetchPageData();
-      fetchGoals();
+      fetchPageData(); // Оновити дані сторінки
+      // fetchGoals(); // Якщо транзакції впливають на цілі (наприклад, current_amount), то потрібно оновити
     } catch (error) {
       console.error("Помилка при додаванні транзакції:", error);
       alert(`Помилка: ${error.message}`);
@@ -208,56 +228,50 @@ function ProfilePage() {
     setNewGoalData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleAddGoal = async (e) => {
-    e.preventDefault();
-    if (!userId) {
-      alert("Необхідно авторизуватися для створення цілі.");
-      return;
-    }
-    if (!newGoalData.goal_name.trim() || !newGoalData.target_amount || !newGoalData.deadline) {
-      alert("Будь ласка, заповніть назву, цільову суму та термін досягнення цілі.");
-      return;
-    }
-    if (parseFloat(newGoalData.target_amount) <= 0) {
-      alert("Цільова сума має бути більшою за нуль.");
-      return;
-    }
 
-    const payload = {
-      user_id: userId,
-      goal_name: newGoalData.goal_name.trim(),
-      target_amount: parseFloat(newGoalData.target_amount),
-      deadline: newGoalData.deadline,
-    };
+const handleAddGoal = async (e) => {
+  e.preventDefault();
 
-    try {
-      const response = await fetchWithAuth('/goals', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+  const currentAmount = (newGoalData.current_amount && !isNaN(parseFloat(newGoalData.current_amount)))
+                        ? parseFloat(newGoalData.current_amount)
+                        : 0;
 
-      if (!response.ok) {
-        let errorMessage = `Не вдалося створити ціль: ${response.status} ${response.statusText}`;
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorMessage;
-        } catch (e) {
-          const textError = await response.text().catch(() => '');
-          if (textError) errorMessage += ` - ${textError}`;
-        }
-        throw new Error(errorMessage);
-      }
+  if (currentAmount > parseFloat(newGoalData.target_amount)) {
+    alert("Поточна сума не може бути більшою за цільову суму.");
+    return;
+  }
 
-      alert('Ціль успішно створено!');
-      setNewGoalData(initialGoalData);
-      setShowGoalForm(false);
-      fetchGoals();
-    } catch (error) {
-      console.error("Помилка при створенні цілі:", error);
-      alert(`Помилка: ${error.message}`);
-    }
+  const payload = {
+    user_id: userId,
+    goal_name: newGoalData.goal_name.trim(),
+    target_amount: parseFloat(newGoalData.target_amount),
+    current_amount: currentAmount,
+    deadline: newGoalData.deadline,
+    status: 'in_progress',
   };
+
+  try {
+    const response = await fetchWithAuth('/goals', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: `HTTP error ${response.status}` }));
+      throw new Error(errorData.message || `Не вдалося додати ціль: ${response.statusText}`);
+    }
+
+    setNewGoalData(initialGoalData);
+    setShowGoalForm(false);
+    alert('Ціль успішно додано!');
+    fetchGoals(); // Оновлюємо список цілей
+  } catch (error) {
+    console.error("Помилка при додаванні цілі:", error);
+    alert(`Помилка: ${error.message}`);
+  }
+};
+
 
   return (
     <div className="dashboard">
@@ -276,6 +290,7 @@ function ProfilePage() {
           />
           <TransactionForm
             newTransactionData={newTransactionData}
+            setNewTransactionData={setNewTransactionData} // Передаємо setNewTransactionData
             handleTransactionInputChange={handleTransactionInputChange}
             handleAddTransaction={handleAddTransaction}
             setShowTransactionForm={setShowTransactionForm}
@@ -289,6 +304,7 @@ function ProfilePage() {
           <GoalsList goals={goals} />
           <GoalForm
             newGoalData={newGoalData}
+            setNewGoalData={setNewGoalData} // Передаємо setNewGoalData
             handleGoalInputChange={handleGoalInputChange}
             handleAddGoal={handleAddGoal}
             setShowGoalForm={setShowGoalForm}

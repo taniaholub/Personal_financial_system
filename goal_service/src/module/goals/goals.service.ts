@@ -22,14 +22,13 @@ export class GoalsService {
       return this.goalRepository.save(goalData);
     } catch (error: unknown) {
       if (error instanceof Error) {
-        console.error('Error saving goal:', error.message); // Лог помилки
+        console.error('Error saving goal:', error.message); 
       } else {
-        console.error('Unknown error while saving goal:', error); // Лог невідомої помилки
+        console.error('Unknown error while saving goal:', error); 
       }
-      throw error; // Перекидаємо помилку далі, якщо необхідно
+      throw error; 
     }
   }
-  
   
 
   // Отримання списку фінансових цілей користувача
@@ -43,26 +42,26 @@ export class GoalsService {
     return this.goalRepository.findOne({ where: { id } });
   }
 
-  // Оновлення поточної суми зібраних коштів на основі транзакцій
-  async updateCurrentAmount(userId: string) {
-    const goals = await this.goalRepository.find({
-      where: { user_id: userId },
-    });
+  // // Оновлення поточної суми зібраних коштів на основі транзакцій
+  // async updateCurrentAmount(userId: string) {
+  //   const goals = await this.goalRepository.find({
+  //     where: { user_id: userId },
+  //   });
 
-    for (const goal of goals) {
-      const transactions = await this.transactionRepository.find({
-        where: {
-          user_id: userId,
-          type: 'income',
-          transaction_date: LessThanOrEqual(goal.deadline),
-        },
-      });
+  //   for (const goal of goals) {
+  //     const transactions = await this.transactionRepository.find({
+  //       where: {
+  //         user_id: userId,
+  //         type: 'income',
+  //         transaction_date: LessThanOrEqual(goal.deadline),
+  //       },
+  //     });
 
-      goal.current_amount = transactions.reduce(
-        (acc, transaction) => acc + Number(transaction.amount),
-        0,
-      );
-      await this.goalRepository.save(goal);
-    }
-  }
+  //     goal.current_amount = transactions.reduce(
+  //       (acc, transaction) => acc + Number(transaction.amount),
+  //       0,
+  //     );
+  //     await this.goalRepository.save(goal);
+  //   }
+  // }
 }
