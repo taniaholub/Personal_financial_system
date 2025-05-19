@@ -57,6 +57,7 @@ export default function LoginPage({ navigate }) {
 
   return (
     <div>
+      <div className="form-container">
       <form onSubmit={login} className="login-form">
         <h2>Login</h2>
 
@@ -87,6 +88,7 @@ export default function LoginPage({ navigate }) {
           {isLoading ? "Logging in..." : "Login"} {}
         </button>
       </form>
+      </div>
     </div>
   );
 }

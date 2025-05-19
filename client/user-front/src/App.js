@@ -22,15 +22,19 @@ function App() {
     <div style={{ padding: '20px' }}>
       <nav>
         {!isLoggedIn ? (
+          <div className="nav-buttons">
           <>
             <button onClick={() => setPage('login')}>Login</button>
             <button onClick={() => setPage('register')}>Register</button>
           </>
+          </div>
         ) : (
+          <div className="nav-buttons">
           <>
             <button onClick={() => setPage('profile')}>Profile</button>
             <button onClick={handleLogout}>Logout</button>
           </>
+        </div>
         )}
       </nav>
 

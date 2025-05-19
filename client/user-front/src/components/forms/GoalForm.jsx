@@ -1,4 +1,4 @@
-iconst GoalForm = ({
+const GoalForm = ({
   newGoalData,
   handleGoalInputChange,
   handleAddGoal,

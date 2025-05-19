@@ -30,6 +30,7 @@ export default function RegisterPage() {
   };
 
   return (
+    <div className="form-container">
     <form onSubmit={register} className="register-form">
       <h2>Register</h2>
       <div className="form-group">
@@ -61,5 +62,6 @@ export default function RegisterPage() {
       </div>
       <button type="submit">Register</button>
     </form>
+  </div>
   );
 }
