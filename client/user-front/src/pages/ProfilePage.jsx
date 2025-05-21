@@ -1,4 +1,3 @@
-// src/pages/ProfilePage.js
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { fetchWithAuth, getTokenPayload } from "../api";
 import SummaryBox from "../components/UI/SummaryBox";
@@ -6,7 +5,6 @@ import TransactionTable from "../components/UI/TransactionTable";
 import GoalsList from "../components/UI/GoalsList";
 import MonthSelector from "../components/UI/MonthSelector";
 import TransactionForm from "../components/forms/TransactionForm";
-import GoalForm from "../components/forms/GoalForm";
 import LineChartComponent from "../components/charts/LineChartComponent";
 import PieChartComponent from "../components/charts/PieChartComponent";
 import '../index.css';
@@ -42,6 +40,7 @@ function ProfilePage() {
 
   useEffect(() => {
     const payload = getTokenPayload();
+    console.log("[ProfilePage] Token payload:", payload);
     if (payload?.memberId) {
       setUserId(payload.memberId);
     } else {
@@ -50,7 +49,10 @@ function ProfilePage() {
   }, []);
 
   const fetchGoals = useCallback(async () => {
-    if (!userId) return;
+    if (!userId) {
+      console.log("[ProfilePage] fetchGoals skipped: userId is null");
+      return;
+    }
 
     const currentAccessToken = localStorage.getItem('access_token');
     if (!currentAccessToken) {
@@ -80,7 +82,6 @@ function ProfilePage() {
       } else {
         setGoals([]);
       }
-
     } catch (error) {
       console.error("Помилка при завантаженні цілей:", error);
       setGoals([]);
@@ -88,7 +89,10 @@ function ProfilePage() {
   }, [userId]);
 
   const fetchPageData = useCallback(async () => {
-    if (!userId) return;
+    if (!userId) {
+      console.log("[ProfilePage] fetchPageData skipped: userId is null");
+      return;
+    }
     try {
       const summaryRes = await fetchWithAuth(`/transactions/${userId}/summary`);
       const summaryDataOverall = await summaryRes.json();
@@ -149,7 +153,7 @@ function ProfilePage() {
       fetchGoals();
       const intervalId = setInterval(() => {
         fetchGoals();
-      }, 30000);
+      }, 10000);
       return () => clearInterval(intervalId);
     }
   }, [userId, fetchGoals]);
@@ -171,6 +175,7 @@ function ProfilePage() {
       return typeMatch && categoryMatch;
     });
   }, [allTransactionsForMonth, filterType, filterCategory]);
+
   const handleTransactionInputChange = (e) => {
     const { name, value } = e.target;
     setNewTransactionData(prev => ({ ...prev, [name]: value }));
@@ -215,8 +220,7 @@ function ProfilePage() {
       setNewTransactionData(initialTransactionData);
       setShowTransactionForm(false);
       alert('Транзакцію успішно додано!');
-      fetchPageData(); // Оновити дані сторінки
-      // fetchGoals(); // Якщо транзакції впливають на цілі (наприклад, current_amount), то потрібно оновити
+      fetchPageData();
     } catch (error) {
       console.error("Помилка при додаванні транзакції:", error);
       alert(`Помилка: ${error.message}`);
@@ -228,50 +232,48 @@ function ProfilePage() {
     setNewGoalData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleAddGoal = async (e) => {
+    e.preventDefault();
 
-const handleAddGoal = async (e) => {
-  e.preventDefault();
+    const currentAmount = (newGoalData.current_amount && !isNaN(parseFloat(newGoalData.current_amount)))
+      ? parseFloat(newGoalData.current_amount)
+      : 0;
 
-  const currentAmount = (newGoalData.current_amount && !isNaN(parseFloat(newGoalData.current_amount)))
-                        ? parseFloat(newGoalData.current_amount)
-                        : 0;
-
-  if (currentAmount > parseFloat(newGoalData.target_amount)) {
-    alert("Поточна сума не може бути більшою за цільову суму.");
-    return;
-  }
-
-  const payload = {
-    user_id: userId,
-    goal_name: newGoalData.goal_name.trim(),
-    target_amount: parseFloat(newGoalData.target_amount),
-    current_amount: currentAmount,
-    deadline: newGoalData.deadline,
-    status: 'in_progress',
-  };
-
-  try {
-    const response = await fetchWithAuth('/goals', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: `HTTP error ${response.status}` }));
-      throw new Error(errorData.message || `Не вдалося додати ціль: ${response.statusText}`);
+    if (currentAmount > parseFloat(newGoalData.target_amount)) {
+      alert("Поточна сума не може бути більшою за цільову суму.");
+      return;
     }
 
-    setNewGoalData(initialGoalData);
-    setShowGoalForm(false);
-    alert('Ціль успішно додано!');
-    fetchGoals(); // Оновлюємо список цілей
-  } catch (error) {
-    console.error("Помилка при додаванні цілі:", error);
-    alert(`Помилка: ${error.message}`);
-  }
-};
+    const payload = {
+      user_id: userId,
+      goal_name: newGoalData.goal_name.trim(),
+      target_amount: parseFloat(newGoalData.target_amount),
+      current_amount: currentAmount,
+      deadline: newGoalData.deadline,
+      status: 'in_progress',
+    };
 
+    try {
+      const response = await fetchWithAuth('/goals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: `HTTP error ${response.status}` }));
+        throw new Error(errorData.message || `Не вдалося додати ціль: ${response.statusText}`);
+      }
+
+      setNewGoalData(initialGoalData);
+      setShowGoalForm(false);
+      alert('Ціль успішно додано!');
+      fetchGoals();
+    } catch (error) {
+      console.error("Помилка при додаванні цілі:", error);
+      alert(`Помилка: ${error.message}`);
+    }
+  };
 
   return (
     <div className="dashboard">
@@ -290,7 +292,7 @@ const handleAddGoal = async (e) => {
           />
           <TransactionForm
             newTransactionData={newTransactionData}
-            setNewTransactionData={setNewTransactionData} // Передаємо setNewTransactionData
+            setNewTransactionData={setNewTransactionData}
             handleTransactionInputChange={handleTransactionInputChange}
             handleAddTransaction={handleAddTransaction}
             setShowTransactionForm={setShowTransactionForm}
@@ -301,17 +303,12 @@ const handleAddGoal = async (e) => {
           <PieChartComponent data={categoryChartData} />
         </div>
         <div className="right-panel">
-          <GoalsList goals={goals} />
-          <GoalForm
-            newGoalData={newGoalData}
-            setNewGoalData={setNewGoalData} // Передаємо setNewGoalData
-            handleGoalInputChange={handleGoalInputChange}
-            handleAddGoal={handleAddGoal}
-            setShowGoalForm={setShowGoalForm}
-            showGoalForm={showGoalForm}
-            initialGoalData={initialGoalData}
-            userId={userId}
-          />
+          {userId ? (
+            <GoalsList goals={goals} userId={userId} />
+          ) : (
+            <p>Завантаження... або помилка авторизації</p>
+          )}
+          
         </div>
       </div>
     </div>

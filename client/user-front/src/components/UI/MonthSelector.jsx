@@ -1,4 +1,3 @@
-// src/components/ui/MonthSelector.js
 const MonthSelector = ({ selectedMonth, setSelectedMonth }) => {
   const generateMonthOptions = () => {
     const options = [];

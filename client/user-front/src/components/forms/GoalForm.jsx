@@ -1,39 +1,63 @@
+// src/components/forms/GoalForm.jsx
+import React from 'react';
+
 const GoalForm = ({
   newGoalData,
   handleGoalInputChange,
-  handleAddGoal,
+  handleSaveGoal, // Перейменовано для ясності, це буде обробник сабміту
   setShowGoalForm,
   showGoalForm,
   initialGoalData,
   userId,
-  setNewGoalData, 
+  setNewGoalData,
+  isEditing,
 }) => {
-  // Функція для безпечного отримання значення для інпуту
-  // Гарантує, що значення не буде undefined
+  // console.log("[GoalForm] Props:", { showGoalForm, userId, isEditing, newGoalData });
+
   const getSafeInputValue = (value) => {
     if (value === null || value === undefined || (typeof value === 'number' && isNaN(value))) {
-      return ''; // Повертаємо порожній рядок для null, undefined, NaN
+      return '';
     }
-    return value; // В іншому випадку повертаємо саме значення
+    // Для input type="date" потрібен формат YYYY-MM-DD
+    if (typeof value === 'string' && value.includes('T')) {
+      return value.split('T')[0];
+    }
+    return value;
   };
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    handleSaveGoal(); // Викликаємо функцію збереження/оновлення з GoalsList
+  };
+
+  if (!userId && showGoalForm) {
+    // Якщо форма має показуватись, але немає userId, показуємо помилку
+    // Це запобігає рендеру форми без ключової залежності
+    return <p style={{ color: 'red', marginTop: '1rem' }}>Помилка: userId не визначено. Неможливо відобразити форму цілей.</p>;
+  }
+
   return (
-    <div className="summary-box">
+    <div className="summary-box" style={{ marginTop: '1rem' }}>
       <button
-        onClick={() => setShowGoalForm(prev => !prev)}
+        onClick={() => {
+          setShowGoalForm(prev => !prev);
+          if (showGoalForm) { // Якщо форма закривається
+            setNewGoalData(initialGoalData); // Скидаємо дані
+          }
+        }}
         className="button-secondary"
-        style={{ marginTop: '1rem', width: '100%' }} 
+        style={{ width: '100%' }}
       >
-        {showGoalForm ? 'Скасувати додавання цілі' : 'Додати нову ціль'}
+        {showGoalForm ? 'Скасувати створення/редагування цілі' : 'Додати нову ціль'}
       </button>
 
-      {showGoalForm && userId && ( // Перевіряємо і userId, щоб уникнути рендерингу форми без користувача
+      {showGoalForm && userId && ( // Рендеримо форму тільки якщо showGoalForm true І є userId
         <form
-          onSubmit={handleAddGoal}
-          className="form-container goal-form" 
+          onSubmit={handleSubmit}
+          className="custom-form goal-form"
           style={{ marginTop: '1rem', borderTop: '1px solid #eee', paddingTop: '1rem' }}
         >
-          <h4>Додати нову фінансову ціль</h4>
+          <h4>{isEditing ? 'Редагувати фінансову ціль' : 'Додати нову фінансову ціль'}</h4>
           
           <div className="form-group">
             <label htmlFor="goal_name_input">Назва цілі:</label>
@@ -46,6 +70,7 @@ const GoalForm = ({
               onChange={handleGoalInputChange}
               placeholder="Наприклад, Новий телефон"
               required
+              aria-required="true"
             />
           </div>
           
@@ -59,9 +84,10 @@ const GoalForm = ({
               value={getSafeInputValue(newGoalData.target_amount)}
               onChange={handleGoalInputChange}
               step="0.01"
-              min="0.01" // Цільова сума має бути позитивною
+              min="0.01"
               placeholder="5000.00"
               required
+              aria-required="true"
             />
           </div>
           
@@ -75,8 +101,8 @@ const GoalForm = ({
               value={getSafeInputValue(newGoalData.current_amount)}
               onChange={handleGoalInputChange}
               step="0.01"
-              min="0" // Поточна сума може бути 0 або більше
-              placeholder="0.00 (необов'язково)"
+              min="0"
+              placeholder="0.00 (необов’язково)"
             />
           </div>
           
@@ -87,16 +113,17 @@ const GoalForm = ({
               id="goal_deadline_input"
               name="deadline"
               className="input-field"
-              value={getSafeInputValue(newGoalData.deadline)} // input type="date" очікує рядок YYYY-MM-DD
+              value={getSafeInputValue(newGoalData.deadline)}
               onChange={handleGoalInputChange}
-              min={new Date().toISOString().split("T")[0]} // Мінімальна дата - сьогодні
+              min={new Date().toISOString().split("T")[0]} // Сьогоднішня дата як мінімум
               required
+              aria-required="true"
             />
           </div>
           
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginTop: '1.5rem' }}> {}
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginTop: '1.5rem' }}>
             <button type="submit" className="button-primary" style={{ flex: 1 }}>
-              Зберегти ціль
+              {isEditing ? 'Оновити ціль' : 'Зберегти ціль'}
             </button>
             <button
               type="button"
@@ -104,10 +131,7 @@ const GoalForm = ({
               style={{ flex: 1 }}
               onClick={() => {
                 setShowGoalForm(false);
-                // Скидаємо форму до початкових значень
-                if (setNewGoalData && initialGoalData) {
-                  setNewGoalData(initialGoalData);
-                }
+                setNewGoalData(initialGoalData); // Скидаємо дані при скасуванні
               }}
             >
               Скасувати

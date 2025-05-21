@@ -1,4 +1,3 @@
-// src/components/ui/TransactionTable.js
 const TransactionTable = ({ transactions, filterType, setFilterType, filterCategory, setFilterCategory, uniqueCategories }) => {
   return (
     <div className="summary-box">

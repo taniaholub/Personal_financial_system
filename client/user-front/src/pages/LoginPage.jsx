@@ -61,7 +61,6 @@ export default function LoginPage({ navigate }) {
       <form onSubmit={login} className="login-form">
         <h2>Login</h2>
 
-        {/* Відображення помилки, якщо вона є */}
         {error && <div className="error-message">{error}</div>}
 
         <div className="form-group">

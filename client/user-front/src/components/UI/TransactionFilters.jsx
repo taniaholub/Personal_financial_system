@@ -1,4 +1,3 @@
-// src/components/ui/TransactionFilters.js
 const TransactionFilters = ({ filterType, setFilterType, filterCategory, setFilterCategory, uniqueCategories }) => {
   return (
     <div className="filter-container">

@@ -16,7 +16,7 @@ const TransactionForm = ({
         {showTransactionForm ? 'Скасувати транзакцію' : 'Додати транзакцію'}
       </button>
       {showTransactionForm && (
-        <form onSubmit={handleAddTransaction} className="form-container">
+        <form onSubmit={handleAddTransaction} className="custom-form">
           <div className="form-group">
             <label htmlFor="amount">Сума:</label>
             <input

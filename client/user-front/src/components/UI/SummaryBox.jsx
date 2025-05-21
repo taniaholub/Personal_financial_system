@@ -1,4 +1,3 @@
-// src/components/ui/SummaryBox.js
 const SummaryBox = ({ summary, selectedMonth }) => {
   return (
     <>
